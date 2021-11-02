@@ -1,16 +1,15 @@
-# horse_app
+# Horse Management App
 
-A new Flutter project.
+Flutter app for data entry on horses for small lifestyle blocks. Built as an experimental project so is bound to be full of bugs and not following best practices!
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
+## Installation
 
-A few resources to get you started if this is your first Flutter project:
+As of now the app is not deployed on any app stores, so you will need to download the source and build with Flutter.
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+## Features
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Add horse profiles
+- Add events related to horses
+- Clean event viewing and management
+- Export SQLite database to CSV, allows you to analyse the data in better software.
