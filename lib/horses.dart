@@ -1,12 +1,12 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:reactive_date_time_picker/reactive_date_time_picker.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:reactive_image_picker/image_file.dart';
-import 'package:reactive_image_picker/reactive_image_picker.dart';
+import './reactive_image_picker2.dart';
 
 import './_utils.dart';
 import "./models/horse.dart";
@@ -173,6 +173,10 @@ class HorseListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      contentPadding:
+          const EdgeInsets.only(left: 8, right: 16, top: 0, bottom: 0),
+      minVerticalPadding: 0,
+      leading: horse.photo != null ? Image.memory(horse.photo!) : null,
       title: Text(horse.name),
       subtitle: Text(
           '${horse.registrationName} - ${DateTime.now().difference(horse.dateOfBirth).inDays ~/ 365} years old'),
@@ -249,10 +253,8 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
     super.initState();
     var horse = widget.horse;
 
-    // ImageFile? image = horse?.photo;
-
     form = FormGroup({
-      HorsesTable.photo: FormControl<ImageFile>(),
+      HorsesTable.photo: FormControl<Uint8List>(value: horse?.photo),
       HorsesTable.registrationName: FormControl<String>(
           validators: [Validators.required], value: horse?.registrationName),
       HorsesTable.registrationNumber:

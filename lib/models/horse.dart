@@ -65,9 +65,6 @@ class Horse {
             : Sex.unknown;
 
     var rawHeight = map[HorsesTable.height];
-    if (rawHeight is String) {
-      print(num.parse(rawHeight));
-    }
     num height = rawHeight is num
         ? rawHeight
         : rawHeight is String
