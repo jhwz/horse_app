@@ -124,8 +124,6 @@ class DB {
   static Future<void> init() async {
     String path = join(await getDatabasesPath(), 'app.db');
 
-    deleteDatabase(path);
-
     db._database = await openDatabase(path, version: 1,
         onCreate: (Database db, int version) async {
       await db.execute(createHorsesTable);
