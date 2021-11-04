@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:horse_app/models/horse.dart';
 
 import 'package:reactive_forms/reactive_forms.dart';
-import 'package:reactive_date_time_picker/reactive_date_time_picker.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
 import './_utils.dart';

@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import '../db.dart';
-import 'package:reactive_image_picker/image_file.dart';
 
 int dateTimeToInt(DateTime dateTime) {
   return dateTime.millisecondsSinceEpoch;
@@ -72,10 +71,9 @@ class Horse {
             : 0;
 
     var rawPhoto = map[HorsesTable.photo];
-    Uint8List? photo = rawPhoto is Uint8List
-        ? rawPhoto
-        : rawPhoto is ImageFile
-            ? rawPhoto.image?.readAsBytesSync()
+    Uint8List? photo =
+        rawPhoto != null && rawPhoto is Uint8List && rawPhoto.isNotEmpty
+            ? rawPhoto
             : null;
 
     var rawRegistrationNumber = map[HorsesTable.registrationNumber];
