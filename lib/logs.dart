@@ -64,7 +64,7 @@ class _LogsPageState extends State<LogsPage> {
           continue;
         }
 
-        if (curr.last.type() == events[i].type() &&
+        if (curr.last.type == events[i].type &&
             curr.last.date.difference(events[i].date).abs().inHours < 8) {
           curr.add(events[i]);
         } else {
@@ -89,7 +89,7 @@ class _LogsPageState extends State<LogsPage> {
               filter: filter, offset: pageKey, limit: _pageSize);
           isLastPage = eventsNext.length < _pageSize;
           for (int i = 0; i < eventsNext.length; i++) {
-            if (curr.last.type() == eventsNext[i].type() &&
+            if (curr.last.type == eventsNext[i].type &&
                 curr.last.date.difference(eventsNext[i].date).abs().inHours <
                     8) {
               curr.add(eventsNext[i]);
@@ -207,7 +207,7 @@ class LogListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(
-        formatStr(event.type()),
+        formatStr(event.type),
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
       subtitle: Row(
@@ -233,7 +233,7 @@ class LogListGroup extends StatelessWidget {
     return ExpandablePanel(
       header: ListTile(
         title: Text(
-          formatStr(events[0].type()),
+          formatStr(events[0].type),
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         subtitle:
@@ -274,12 +274,15 @@ class _NewLogPageState extends State<NewLogPage> {
   FormGroup form = FormGroup({});
   Widget? widgetsForForm;
 
-  Future<List<Horse>> _loadHorses() async {
+  Future<bool> _loadHorses() async {
+    if (_allHorses.isNotEmpty) {
+      return true;
+    }
     var horses = await DB.listHorses();
     setState(() {
       _allHorses = horses;
     });
-    return horses;
+    return true;
   }
 
   static final RegExp numberRegex = RegExp(r'^-?[0-9]+$');
@@ -406,10 +409,19 @@ class _NewLogPageState extends State<NewLogPage> {
   }
 
   Future<void> _createEvent() async {
-    List<Event> events = _horses
-        .map((h) => createEventFromMap(form.value, h, eventType: _type))
-        .toList();
-    await Future.wait(events.map((e) => DB.createEvent(e)));
+    if (_horses.isNotEmpty) {
+      List<Event> events = _horses
+          .map((h) => createEventFromMap(form.value, h, eventType: _type))
+          .toList();
+      await Future.wait(events.map((e) => DB.createEvent(e)));
+
+      if (_type == EventType.foaling) {
+        for (var h in _horses) {
+          h.setHeatDateFromPregnancy(DateTime.now());
+          await DB.updateHorse(h);
+        }
+      }
+    }
     Navigator.pop(context);
   }
 
@@ -544,6 +556,12 @@ class _NewLogPageState extends State<NewLogPage> {
                             padding: const EdgeInsets.only(bottom: 8.0),
                           ),
                           ..._allHorses
+                              .where((h) {
+                                return _type == EventType.foaling ||
+                                        _type == EventType.pregnancyScans
+                                    ? h.sex == Sex.female
+                                    : true;
+                              })
                               .map(
                                 (e) => Container(
                                   decoration: BoxDecoration(
@@ -746,7 +764,7 @@ class _LogSummaryPageState extends State<LogSummaryPage> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
-                formatStr(e.type()),
+                formatStr(e.type),
                 style: Theme.of(context).textTheme.headline5,
               ),
             ),

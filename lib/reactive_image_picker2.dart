@@ -171,9 +171,7 @@ class ReactiveImagePicker extends ReactiveFormField<Uint8List, Uint8List> {
                         });
                       }
                     },
-                valueChanged: (Uint8List image) {
-                  
-                },
+                valueChanged: (Uint8List image) {},
                 inputBuilder: inputBuilder,
                 imageContainerDecoration: imageContainerDecoration,
                 deleteDialogBuilder: deleteDialogBuilder,
@@ -259,7 +257,6 @@ class ImagePickerWidget extends StatelessWidget {
             await _onBeforeChange(newVal));
       }
     } catch (e) {
-      print("err: $e");
       errorPickBuilder?.call(source, context: context);
     }
   }

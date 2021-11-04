@@ -1,7 +1,8 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:horse_app/logs.dart';
+import 'package:path/path.dart';
 
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:reactive_date_time_picker/reactive_date_time_picker.dart';
@@ -47,7 +48,7 @@ class _HorsesPageState extends State<HorsesPage> {
     });
   }
 
-  Future<void> _onTap(int idx, Horse horse) async {
+  Future<void> _onTap(BuildContext context, int idx, Horse horse) async {
     await Navigator.push(context, MaterialPageRoute(builder: (context) {
       return HorseProfilePage(horse: horse);
     }));
@@ -130,7 +131,7 @@ class _HorsesPageState extends State<HorsesPage> {
               horse: item,
               onDelete: _onDelete,
               onTap: (h) {
-                _onTap(index, h);
+                _onTap(context, index, h);
               },
             ),
           ),
@@ -222,6 +223,9 @@ class HorseProfilePage extends StatefulWidget {
 
 class _HorseProfilePageState extends State<HorseProfilePage> {
   static const String __validHands = 'validHands';
+
+  Horse? horse;
+
   static Map<String, dynamic>? _validHands(AbstractControl<dynamic> control) {
     try {
       String hands = control.value is String ? control.value : '';
@@ -251,7 +255,7 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
   @override
   initState() {
     super.initState();
-    var horse = widget.horse;
+    horse = widget.horse;
 
     form = FormGroup({
       HorsesTable.photo: FormControl<Uint8List>(value: horse?.photo),
@@ -259,6 +263,10 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
           validators: [Validators.required], value: horse?.registrationName),
       HorsesTable.registrationNumber:
           FormControl<String>(value: horse?.registrationNumber),
+      HorsesTable.sireRegistrationName:
+          FormControl<String>(value: horse?.sireRegistrationName),
+      HorsesTable.damRegistrationName:
+          FormControl<String>(value: horse?.damRegistrationName),
       HorsesTable.name: FormControl<String>(
           validators: [Validators.required], value: horse?.name),
       HorsesTable.dateOfBirth: FormControl<DateTime>(
@@ -271,34 +279,30 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    var horse = widget.horse;
-    String title = horse == null ? 'New Horse' : '${horse.name} Profile';
+    String title = horse == null ? 'New Horse' : '${horse!.name} Profile';
 
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
       ),
-      bottomNavigationBar: Padding(
-          padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 24.0),
-          child: ReactiveForm(
-            formGroup: form,
-            child: CreateHorseSubmitButton(
-              formGroup: form,
-              update: horse != null,
-            ),
-          )),
+      bottomNavigationBar: ReactiveForm(
+        formGroup: form,
+        child: CreateHorseSubmitButton(
+          formGroup: form,
+          update: horse != null,
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: ReactiveForm(
           formGroup: form,
           child: SingleChildScrollView(
             child: Column(
-              children: <Widget>[
+              children: <Widget?>[
                 ReactiveImagePicker(
                   formControlName: HorsesTable.photo,
                   decoration: const InputDecoration(
                       contentPadding: EdgeInsets.zero,
-                      labelText: 'Image',
                       filled: false,
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
@@ -307,8 +311,46 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                   inputBuilder: (onPressed) => TextButton.icon(
                     onPressed: onPressed,
                     icon: const Icon(Icons.add),
-                    label: const Text('Add an image'),
+                    label: const Text('Set profile photo'),
                   ),
+                ),
+                horse == null || horse!.sex != Sex.female
+                    ? null
+                    : ListTile(
+                        trailing:
+                            const Icon(Icons.keyboard_arrow_right_outlined),
+                        subtitle: const Text('View heat cycle overview'),
+                        title: horse!.heat == null
+                            ? const Text('No dates set yet!')
+                            : horse!.isInHeat()
+                                ? const Text('In Heat')
+                                : const Text('Not in Heat'),
+                        onTap: () async {
+                          var next = await Navigator.push<Horse>(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      HorseHeatPage(horse: horse!)));
+
+                          setState(() {
+                            horse!.heat = next?.heat;
+                          });
+                        },
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(4)),
+                        ),
+                      ),
+                Row(
+                  children: <Widget>[
+                    Text(
+                      "Details",
+                      style: Theme.of(context).textTheme.overline,
+                    ),
+                    const Expanded(
+                        child: Divider(
+                      indent: 10,
+                    )),
+                  ],
                 ),
                 ReactiveTextField(
                   readOnly: horse != null,
@@ -318,16 +360,27 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                   ),
                 ),
                 ReactiveTextField(
-                  formControlName: HorsesTable.registrationNumber,
+                  formControlName: HorsesTable.sireRegistrationName,
                   decoration: const InputDecoration(
                     labelText: 'Registration Number',
                   ),
                 ),
                 ReactiveTextField(
+                  formControlName: HorsesTable.damRegistrationName,
+                  decoration: const InputDecoration(
+                    labelText: 'Sire Registration Number',
+                  ),
+                ),
+                ReactiveTextField(
+                  formControlName: HorsesTable.registrationNumber,
+                  decoration: const InputDecoration(
+                    labelText: 'Dam Registration Number',
+                  ),
+                ),
+                ReactiveTextField(
                   formControlName: HorsesTable.name,
                   decoration: const InputDecoration(
-                    labelText: 'Name',
-                    helperText: 'Alias to display the horse as',
+                    labelText: 'Paddock Name',
                   ),
                 ),
                 ReactiveDateTimePicker(
@@ -349,18 +402,23 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                     helperText: '',
                   ),
                 ),
-                ReactiveTextField(
-                  formControlName: HorsesTable.height,
-                  decoration: const InputDecoration(
-                      labelText: 'Height',
-                      helperText: 'Height in hands (hh)',
-                      suffixText: 'hh'),
-                  validationMessages: (c) =>
-                      {__validHands: "invalid hands format; try '15.3'"},
-                )
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 48),
+                  child: ReactiveTextField(
+                    formControlName: HorsesTable.height,
+                    decoration: const InputDecoration(
+                        labelText: 'Height',
+                        helperText: 'Height in hands (hh)',
+                        suffixText: 'hh'),
+                    validationMessages: (c) =>
+                        {__validHands: "Invalid hands format; try '15.3'"},
+                  ),
+                ),
               ]
-                  .map((w) =>
-                      Padding(padding: const EdgeInsets.only(top: 8), child: w))
+                  .where((e) => e != null)
+                  .toList()
+                  .map<Widget>((w) => Padding(
+                      padding: const EdgeInsets.only(top: 12), child: w))
                   .toList(),
             ),
           ),
@@ -382,29 +440,195 @@ class CreateHorseSubmitButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final form = ReactiveForm.of(context);
-    return ElevatedButton(
-      onPressed: form != null && form.valid
-          ? () async {
-              try {
-                if (update) {
-                  await DB.updateHorse(Horse.fromMap(formGroup.value));
-                } else {
-                  await DB.createHorse(Horse.fromMap(formGroup.value));
+    if (form == null) {
+      return const SizedBox();
+    }
+    if (form.pristine) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 24.0),
+      child: ElevatedButton(
+        onPressed: form.valid
+            ? () async {
+                try {
+                  if (update) {
+                    await DB.updateHorse(Horse.fromMap(formGroup.value));
+                  } else {
+                    await DB.createHorse(Horse.fromMap(formGroup.value));
+                  }
+                  showSuccess(context,
+                      'Sucessfully ${update ? 'updated' : 'created'}!');
+                  Future.delayed(const Duration(milliseconds: 500), () {
+                    Navigator.pop(context);
+                  });
+                } catch (e) {
+                  showError(context,
+                      'Failed to ${update ? 'save changes' : 'create'} horse: ${e.toString()}');
                 }
-                showSuccess(
-                    context, 'Sucessfully ${update ? 'updated' : 'created'}!');
-                Future.delayed(const Duration(milliseconds: 500), () {
-                  Navigator.pop(context);
-                });
-              } catch (e) {
-                showError(context,
-                    'Failed to ${update ? 'save changes' : 'create'} horse: ${e.toString()}');
               }
-            }
-          : null,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12.0),
-        child: Text(update ? 'Save Changes' : 'Create Horse'),
+            : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          child: Text(update ? 'Save Changes' : 'Create Horse'),
+        ),
+      ),
+    );
+  }
+}
+
+// Widget for adding a new horse
+class HorseHeatPage extends StatefulWidget {
+  final Horse horse;
+
+  const HorseHeatPage({Key? key, required this.horse}) : super(key: key);
+
+  @override
+  State<HorseHeatPage> createState() => _HorseHeatPage();
+}
+
+class _HorseHeatPage extends State<HorseHeatPage> {
+  late final FormGroup form;
+
+  String? updateErr;
+
+  @override
+  initState() {
+    super.initState();
+    var horse = widget.horse;
+
+    form = FormGroup({
+      HorsesTable.heat: FormControl<DateTime>(value: horse.nextHeatStart()),
+    });
+
+    form.valueChanges.listen((event) async {
+      if (event == null) {
+        return;
+      }
+      var raw = event[HorsesTable.heat];
+      horse.heat = raw is DateTime ? raw : null;
+      try {
+        await DB.updateHorse(horse);
+      } catch (e) {
+        setState(() {
+          updateErr = 'Failed to update: ${e.toString()}';
+        });
+      }
+      setState(() {
+        horse = horse;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final horse = widget.horse;
+
+    final inHeat = horse.isInHeat();
+
+    List<Widget> children = [];
+    if (inHeat) {
+      children = [
+        (Container(
+          margin: const EdgeInsets.only(top: 12, bottom: 16),
+          child: Text(
+            'In heat',
+            style: Theme.of(context)
+                .textTheme
+                .headline6!
+                .merge(const TextStyle(color: Colors.white)),
+          ),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(12),
+          decoration: const BoxDecoration(
+            color: Colors.green,
+            borderRadius: BorderRadius.all(Radius.circular(4)),
+          ),
+        )),
+        (Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                Expanded(
+                    child: Text("End of current cycle:",
+                        style: Theme.of(context).textTheme.caption)),
+                Text(
+                    "${DateTime.now().difference(horse.currentHeatEnd()!).abs().inDays} Days from now",
+                    style: Theme.of(context).textTheme.bodyText1),
+              ],
+            ))),
+      ];
+    } else if (horse.heat != null) {
+      children = [
+        (Container(
+          margin: const EdgeInsets.only(top: 12, bottom: 16),
+          child: Text(
+            'Not in heat',
+            style: Theme.of(context)
+                .textTheme
+                .headline6!
+                .merge(const TextStyle(color: Colors.white60)),
+          ),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(12),
+          decoration: const BoxDecoration(
+            color: Colors.black26,
+            borderRadius: BorderRadius.all(Radius.circular(4)),
+          ),
+        )),
+      ];
+    }
+    if (horse.heat != null) {
+      final nextHeat = DateTime.now().difference(horse.nextHeatStart()!).abs();
+      children.add((Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                  child: Text("Next Heat Start:",
+                      style: Theme.of(context).textTheme.caption)),
+              Text("${nextHeat.inDays} days from now",
+                  style: Theme.of(context).textTheme.bodyText1),
+            ],
+          ))));
+    }
+
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.pop(context, horse);
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('${horse.name} Heat Cycle'),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: ReactiveForm(
+            formGroup: form,
+            child: Column(children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 24),
+                child: ReactiveDateTimePicker(
+                  formControlName: HorsesTable.heat,
+                  firstDate: DateTime.now().subtract(const Duration(days: 337)),
+                  decoration: InputDecoration(
+                    labelText: 'Start of heat period',
+                    errorText: updateErr,
+                    errorMaxLines: 5,
+                    helperMaxLines: 99,
+                    helperText: horse.heat == null && updateErr == null
+                        ? 'No heat cycle set yet! Set this date to any time your mare has been or will be in heat and we will handle everything else. When a pregnancy event occurs for the mare, their cycle will automatically be updated.'
+                        : null,
+                    suffixIcon: const Icon(Icons.calendar_today),
+                  ),
+                ),
+              ),
+              ...children,
+            ]),
+          ),
+        ),
       ),
     );
   }
