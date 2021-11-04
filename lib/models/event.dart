@@ -61,7 +61,7 @@ abstract class Event {
   Horse horse;
   String notes = '';
 
-  String type();
+  String get type;
 
   Event._fromMap(Map<String, Object?> map, this.horse) {
     var rawDate = map[EventsTable.date];
@@ -84,7 +84,7 @@ abstract class Event {
       EventsTable.date: dateTimeToInt(date),
       EventsTable.horseRegistrationName: horse.registrationName,
       EventsTable.notes: notes,
-      EventsTable.type: type()
+      EventsTable.type: type
     };
   }
 }
@@ -110,7 +110,7 @@ class DrenchEvent extends Event {
   }
 
   @override
-  String type() => EventType.drench;
+  String get type => EventType.drench;
 }
 
 //
@@ -121,7 +121,7 @@ class FarrierEvent extends Event {
       : super._fromMap(map, horse);
 
   @override
-  String type() => EventType.farrier;
+  String get type => EventType.farrier;
 }
 
 //
@@ -131,7 +131,7 @@ class MiteTreatmentEvent extends Event {
   String miteTreatmentType;
 
   @override
-  String type() => EventType.miteTreatment;
+  String get type => EventType.miteTreatment;
 
   MiteTreatmentEvent._fromMap(
       Map<String, Object?> map, horse, this.miteTreatmentType)
@@ -159,7 +159,7 @@ class DentistEvent extends Event {
       : super._fromMap(map, horse);
 
   @override
-  String type() => EventType.dentist;
+  String get type => EventType.dentist;
 }
 
 class FoalingEvent extends Event {
@@ -201,12 +201,12 @@ class FoalingEvent extends Event {
   }
 
   @override
-  String type() => EventType.foaling;
+  String get type => EventType.foaling;
 }
 
 class FeedEvent extends Event {
   @override
-  String type() => EventType.feed;
+  String get type => EventType.feed;
 
   @override
   FeedEvent.fromMap(Map<String, Object?> map, Horse horse)
@@ -215,7 +215,7 @@ class FeedEvent extends Event {
 
 class VetEvent extends Event {
   @override
-  String type() => EventType.vet;
+  String get type => EventType.vet;
 
   @override
   VetEvent.fromMap(Map<String, Object?> map, horse)
@@ -228,7 +228,7 @@ class PregnancyScans extends Event {
   String? sireRegistrationName;
 
   @override
-  String type() => EventType.pregnancyScans;
+  String get type => EventType.pregnancyScans;
 
   PregnancyScans._fromMap(
     Map<String, Object?> map,

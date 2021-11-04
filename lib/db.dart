@@ -67,19 +67,25 @@ CREATE TABLE ${Tables.events} (
 class HorsesTable {
   static const String registrationName = 'registrationName';
   static const String registrationNumber = 'registrationNumber';
+  static const String sireRegistrationName = 'sireRegistrationName';
+  static const String damRegistrationName = 'damRegistrationName';
   static const String name = 'name';
   static const String sex = 'sex';
   static const String height = 'height';
   static const String dateOfBirth = 'dateOfBirth';
   static const String photo = 'photo';
+  static const String heat = 'heat';
 
   static List<String> order = [
     registrationNumber,
     registrationName,
+    sireRegistrationName,
+    damRegistrationName,
     name,
     sex,
     height,
-    dateOfBirth
+    dateOfBirth,
+    heat
   ];
 }
 
@@ -87,10 +93,13 @@ String createHorsesTable = '''
 CREATE TABLE ${Tables.horses} (
   ${HorsesTable.registrationName} TEXT PRIMARY KEY,
   ${HorsesTable.registrationNumber} TEXT,
+  ${HorsesTable.sireRegistrationName} TEXT,
+  ${HorsesTable.damRegistrationName} TEXT,
   ${HorsesTable.name} TEXT,
   ${HorsesTable.sex} INTEGER,
   ${HorsesTable.height} REAL,
   ${HorsesTable.dateOfBirth} INTEGER,
+  ${HorsesTable.heat} INTEGER,
   ${HorsesTable.photo} BLOB
 );
 ''';
@@ -105,6 +114,7 @@ class DB {
     String path = join(await getDatabasesPath(), 'app.db');
 
     deleteDatabase(path);
+
     db._database = await openDatabase(path, version: 1,
         onCreate: (Database db, int version) async {
       await db.execute(createHorsesTable);

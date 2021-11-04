@@ -27,6 +27,9 @@ class Horse {
   // registered name of the horse
   String registrationName;
 
+  String sireRegistrationName;
+  String damRegistrationName;
+
   // name to refer to the horse by
   String name;
 
@@ -38,24 +41,51 @@ class Horse {
 
   DateTime dateOfBirth;
 
+  // When the horses heat is due to appear
+  DateTime? heat;
+
   Uint8List? photo;
 
-  Horse(this.registrationName, this.dateOfBirth, this.sex,
-      {this.name = '', this.registrationNumber, this.height = 0, this.photo}) {
+  Horse({
+    required this.registrationName,
+    required this.dateOfBirth,
+    required this.sex,
+    this.registrationNumber,
+    this.sireRegistrationName = '',
+    this.damRegistrationName = '',
+    this.name = '',
+    this.height = 0,
+    this.photo,
+    this.heat,
+  }) {
     if (name == '') {
       name = registrationName;
     }
   }
 
+  static String _strOr(Map<String, Object?> map, String key, String def) {
+    var raw = map[key];
+    return raw is String ? raw : def;
+  }
+
+  static T _valOr<T>(Map<String, Object?> map, String key, T def) {
+    var raw = map[key];
+    return raw is T ? raw : def;
+  }
+
+  static DateTime? _getDate(Object? raw) {
+    return raw is int
+        ? intToDateTime(raw)
+        : raw is String
+            ? DateTime.parse(raw)
+            : raw is DateTime
+                ? raw
+                : null;
+  }
+
   factory Horse.fromMap(Map<String, Object?> map) {
-    var rawDob = map[HorsesTable.dateOfBirth];
-    DateTime dob = rawDob is int
-        ? intToDateTime(rawDob)
-        : rawDob is String
-            ? DateTime.parse(rawDob)
-            : rawDob is DateTime
-                ? rawDob
-                : DateTime.now();
+    DateTime dob = _getDate(map[HorsesTable.dateOfBirth]) ?? DateTime.now();
+    DateTime? heat = _getDate(map[HorsesTable.heat]);
 
     var rawSex = map[HorsesTable.sex];
     Sex sex = rawSex is int
@@ -72,7 +102,7 @@ class Horse {
             : 0;
 
     var rawPhoto = map[HorsesTable.photo];
-    Uint8List? photo = rawPhoto is Uint8List
+    Uint8List? photo = rawPhoto is Uint8List && rawPhoto.isNotEmpty
         ? rawPhoto
         : rawPhoto is ImageFile
             ? rawPhoto.image?.readAsBytesSync()
@@ -83,13 +113,16 @@ class Horse {
         rawRegistrationNumber is String ? rawRegistrationNumber : null;
 
     return Horse(
-      map[HorsesTable.registrationName] as String,
-      dob,
-      sex,
+      registrationName: map[HorsesTable.registrationName] as String,
       registrationNumber: registrationNumber,
+      dateOfBirth: dob,
+      sex: sex,
+      sireRegistrationName: _valOr(map, HorsesTable.sireRegistrationName, ''),
+      damRegistrationName: _valOr(map, HorsesTable.damRegistrationName, ''),
       name: map[HorsesTable.name] as String,
       height: height,
       photo: photo,
+      heat: heat,
     );
   }
 
@@ -97,12 +130,60 @@ class Horse {
     var map = <String, Object?>{
       HorsesTable.registrationName: registrationName,
       HorsesTable.registrationNumber: registrationNumber,
+      HorsesTable.sireRegistrationName: sireRegistrationName,
+      HorsesTable.damRegistrationName: damRegistrationName,
       HorsesTable.name: name,
       HorsesTable.sex: sex.index,
       HorsesTable.dateOfBirth: dateTimeToInt(dateOfBirth),
       HorsesTable.height: height,
       HorsesTable.photo: photo ?? Uint8List(0),
+      HorsesTable.heat: heat != null ? dateTimeToInt(heat!) : null,
     };
     return map;
+  }
+
+  static const Duration cyclePeriod = Duration(days: 21);
+  static const Duration heatDuration = Duration(days: 6);
+
+  DateTime? nextHeatStart() {
+    if (heat == null) {
+      return null;
+    }
+
+    var now = DateTime.now();
+
+    // horrible algorithm but it will work
+    var nextHeat = heat!;
+    while (nextHeat.isBefore(now)) {
+      nextHeat = nextHeat.add(cyclePeriod);
+    }
+    return nextHeat;
+  }
+
+  DateTime? currentHeatEnd() {
+    if (heat == null) {
+      return null;
+    }
+
+    var now = DateTime.now();
+
+    var nextHeat = heat!;
+    var prevHeat = heat!;
+    while (nextHeat.isBefore(now)) {
+      prevHeat = nextHeat;
+      nextHeat = nextHeat.add(cyclePeriod);
+    }
+    if (prevHeat.isAfter(now)) {
+      return null;
+    }
+    return prevHeat.add(heatDuration);
+  }
+
+  bool isInHeat() {
+    return currentHeatEnd()?.isAfter(DateTime.now()) ?? false;
+  }
+
+  void setHeatDateFromPregnancy(DateTime date) {
+    heat = date.add(const Duration(days: 6));
   }
 }
