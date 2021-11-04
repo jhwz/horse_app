@@ -1,14 +1,6 @@
 import './horse.dart';
 import '../db.dart';
 
-int dateTimeToInt(DateTime dateTime) {
-  return dateTime.millisecondsSinceEpoch;
-}
-
-DateTime intToDateTime(int millisecondsSinceEpoch) {
-  return DateTime.fromMillisecondsSinceEpoch(millisecondsSinceEpoch);
-}
-
 class EventType {
   static const String drench = "drench";
   static const String farrier = "farrier";

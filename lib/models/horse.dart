@@ -1,14 +1,6 @@
 import 'dart:typed_data';
 import '../db.dart';
 
-int dateTimeToInt(DateTime dateTime) {
-  return dateTime.millisecondsSinceEpoch;
-}
-
-DateTime intToDateTime(int millisecondsSinceEpoch) {
-  return DateTime.fromMillisecondsSinceEpoch(millisecondsSinceEpoch);
-}
-
 enum Sex { unknown, male, female }
 
 extension SexString on Sex {
@@ -60,11 +52,6 @@ class Horse {
     if (name == '') {
       name = registrationName;
     }
-  }
-
-  static String _strOr(Map<String, Object?> map, String key, String def) {
-    var raw = map[key];
-    return raw is String ? raw : def;
   }
 
   static T _valOr<T>(Map<String, Object?> map, String key, T def) {

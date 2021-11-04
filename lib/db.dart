@@ -1,9 +1,18 @@
+import 'package:flutter/services.dart';
 import 'package:horse_app/_utils.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import './models/horse.dart';
 import './models/event.dart';
 import 'package:csv/csv.dart' as csv;
+
+int dateTimeToInt(DateTime dateTime) {
+  return dateTime.millisecondsSinceEpoch;
+}
+
+DateTime intToDateTime(int millisecondsSinceEpoch) {
+  return DateTime.fromMillisecondsSinceEpoch(millisecondsSinceEpoch);
+}
 
 class Tables {
   static const String events = 'events';
@@ -43,6 +52,8 @@ class EventsTable {
     miteTreatment_type,
     foaling_foalSex,
     foaling_foalColour,
+    pregnancy_inFoal,
+    pregnancy_numDays,
     sireRegistrationName,
   ];
 }
@@ -219,13 +230,38 @@ OFFSET $offset
     var horses = await db._database.query(Tables.horses);
     var events = await db._database.query(Tables.events);
 
-    var horsesList =
-        horses.map((h) => HorsesTable.order.map((e) => h[e]).toList()).toList();
+    String fmt(String k, Object? o) {
+      if (o == null) return 'NA';
+      if (o is String) {
+        return o;
+      }
+      if (o is int) {
+        if (k == EventsTable.date) {
+          return intToDateTime(o).toIso8601String();
+        }
+        if (k == HorsesTable.sex || k == EventsTable.foaling_foalSex) {
+          return Sex.values[o].toSexString();
+        }
+        return o.toString();
+      }
+      if (o is num) {
+        if (k == HorsesTable.height) {
+          return o.toStringAsFixed(2);
+        }
+        return o.toString();
+      }
+      return o.toString();
+    }
+
+    var horsesList = horses
+        .map((h) => HorsesTable.order.map((e) => fmt(e, h[e])).toList())
+        .toList();
     horsesList.insert(0, HorsesTable.order.map(formatStr).toList());
     var horsesCsv = const csv.ListToCsvConverter().convert(horsesList);
 
-    var eventsList =
-        events.map((h) => EventsTable.order.map((e) => h[e]).toList()).toList();
+    var eventsList = events
+        .map((h) => EventsTable.order.map((e) => fmt(e, h[e])).toList())
+        .toList();
     eventsList.insert(0, EventsTable.order.map(formatStr).toList());
     var eventsCsv = const csv.ListToCsvConverter().convert(eventsList);
 
