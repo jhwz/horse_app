@@ -12,7 +12,7 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text('${appTitle} - Settings')),
+        appBar: AppBar(title: const Text('Settings')),
         drawer: appDrawer(context, '/settings'),
         body: Column(children: <Widget>[
           ListTile(

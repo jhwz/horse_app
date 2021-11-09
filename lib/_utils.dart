@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-const String appTitle = 'Whitehall Stud';
-
 extension DateTimeFormatting on DateTime {
   String dateTime() {
     return "${date()}, $hour:$minute";
