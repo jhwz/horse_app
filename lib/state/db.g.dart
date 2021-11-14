@@ -13,12 +13,14 @@ class Event extends DataClass implements Insertable<Event> {
   final String registrationName;
   final DateTime date;
   final String? notes;
+  final Map<String, dynamic>? extra;
   Event(
       {required this.id,
       required this.type,
       required this.registrationName,
       required this.date,
-      this.notes});
+      this.notes,
+      this.extra});
   factory Event.fromData(Map<String, dynamic> data, {String? prefix}) {
     final effectivePrefix = prefix ?? '';
     return Event(
@@ -32,6 +34,8 @@ class Event extends DataClass implements Insertable<Event> {
           .mapFromDatabaseResponse(data['${effectivePrefix}date'])!,
       notes: const StringType()
           .mapFromDatabaseResponse(data['${effectivePrefix}notes']),
+      extra: $EventsTable.$converter0.mapToDart(const StringType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}extra'])),
     );
   }
   @override
@@ -44,6 +48,10 @@ class Event extends DataClass implements Insertable<Event> {
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String?>(notes);
     }
+    if (!nullToAbsent || extra != null) {
+      final converter = $EventsTable.$converter0;
+      map['extra'] = Variable<String?>(converter.mapToSql(extra));
+    }
     return map;
   }
 
@@ -55,6 +63,8 @@ class Event extends DataClass implements Insertable<Event> {
       date: Value(date),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
+      extra:
+          extra == null && nullToAbsent ? const Value.absent() : Value(extra),
     );
   }
 
@@ -67,6 +77,7 @@ class Event extends DataClass implements Insertable<Event> {
       registrationName: serializer.fromJson<String>(json['registrationName']),
       date: serializer.fromJson<DateTime>(json['date']),
       notes: serializer.fromJson<String?>(json['notes']),
+      extra: serializer.fromJson<Map<String, dynamic>?>(json['extra']),
     );
   }
   @override
@@ -78,6 +89,7 @@ class Event extends DataClass implements Insertable<Event> {
       'registrationName': serializer.toJson<String>(registrationName),
       'date': serializer.toJson<DateTime>(date),
       'notes': serializer.toJson<String?>(notes),
+      'extra': serializer.toJson<Map<String, dynamic>?>(extra),
     };
   }
 
@@ -86,13 +98,15 @@ class Event extends DataClass implements Insertable<Event> {
           String? type,
           String? registrationName,
           DateTime? date,
-          String? notes}) =>
+          Value<String?> notes = const Value.absent(),
+          Value<Map<String, dynamic>?> extra = const Value.absent()}) =>
       Event(
         id: id ?? this.id,
         type: type ?? this.type,
         registrationName: registrationName ?? this.registrationName,
         date: date ?? this.date,
-        notes: notes ?? this.notes,
+        notes: notes.present ? notes.value : this.notes,
+        extra: extra.present ? extra.value : this.extra,
       );
   @override
   String toString() {
@@ -101,13 +115,15 @@ class Event extends DataClass implements Insertable<Event> {
           ..write('type: $type, ')
           ..write('registrationName: $registrationName, ')
           ..write('date: $date, ')
-          ..write('notes: $notes')
+          ..write('notes: $notes, ')
+          ..write('extra: $extra')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, type, registrationName, date, notes);
+  int get hashCode =>
+      Object.hash(id, type, registrationName, date, notes, extra);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -116,7 +132,8 @@ class Event extends DataClass implements Insertable<Event> {
           other.type == this.type &&
           other.registrationName == this.registrationName &&
           other.date == this.date &&
-          other.notes == this.notes);
+          other.notes == this.notes &&
+          other.extra == this.extra);
 }
 
 class EventsCompanion extends UpdateCompanion<Event> {
@@ -125,12 +142,14 @@ class EventsCompanion extends UpdateCompanion<Event> {
   final Value<String> registrationName;
   final Value<DateTime> date;
   final Value<String?> notes;
+  final Value<Map<String, dynamic>?> extra;
   const EventsCompanion({
     this.id = const Value.absent(),
     this.type = const Value.absent(),
     this.registrationName = const Value.absent(),
     this.date = const Value.absent(),
     this.notes = const Value.absent(),
+    this.extra = const Value.absent(),
   });
   EventsCompanion.insert({
     this.id = const Value.absent(),
@@ -138,6 +157,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
     required String registrationName,
     this.date = const Value.absent(),
     this.notes = const Value.absent(),
+    this.extra = const Value.absent(),
   })  : type = Value(type),
         registrationName = Value(registrationName);
   static Insertable<Event> custom({
@@ -146,6 +166,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
     Expression<String>? registrationName,
     Expression<DateTime>? date,
     Expression<String?>? notes,
+    Expression<Map<String, dynamic>?>? extra,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -153,6 +174,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
       if (registrationName != null) 'registration_name': registrationName,
       if (date != null) 'date': date,
       if (notes != null) 'notes': notes,
+      if (extra != null) 'extra': extra,
     });
   }
 
@@ -161,13 +183,15 @@ class EventsCompanion extends UpdateCompanion<Event> {
       Value<String>? type,
       Value<String>? registrationName,
       Value<DateTime>? date,
-      Value<String?>? notes}) {
+      Value<String?>? notes,
+      Value<Map<String, dynamic>?>? extra}) {
     return EventsCompanion(
       id: id ?? this.id,
       type: type ?? this.type,
       registrationName: registrationName ?? this.registrationName,
       date: date ?? this.date,
       notes: notes ?? this.notes,
+      extra: extra ?? this.extra,
     );
   }
 
@@ -189,6 +213,10 @@ class EventsCompanion extends UpdateCompanion<Event> {
     if (notes.present) {
       map['notes'] = Variable<String?>(notes.value);
     }
+    if (extra.present) {
+      final converter = $EventsTable.$converter0;
+      map['extra'] = Variable<String?>(converter.mapToSql(extra.value));
+    }
     return map;
   }
 
@@ -199,7 +227,8 @@ class EventsCompanion extends UpdateCompanion<Event> {
           ..write('type: $type, ')
           ..write('registrationName: $registrationName, ')
           ..write('date: $date, ')
-          ..write('notes: $notes')
+          ..write('notes: $notes, ')
+          ..write('extra: $extra')
           ..write(')'))
         .toString();
   }
@@ -236,9 +265,14 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
   late final GeneratedColumn<String?> notes = GeneratedColumn<String?>(
       'notes', aliasedName, true,
       typeName: 'TEXT', requiredDuringInsert: false);
+  final VerificationMeta _extraMeta = const VerificationMeta('extra');
+  late final GeneratedColumnWithTypeConverter<Map<String, dynamic>, String?>
+      extra = GeneratedColumn<String?>('extra', aliasedName, true,
+              typeName: 'TEXT', requiredDuringInsert: false)
+          .withConverter<Map<String, dynamic>>($EventsTable.$converter0);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, type, registrationName, date, notes];
+      [id, type, registrationName, date, notes, extra];
   @override
   String get aliasedName => _alias ?? 'events';
   @override
@@ -273,6 +307,7 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
       context.handle(
           _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
     }
+    context.handle(_extraMeta, const VerificationResult.success());
     return context;
   }
 
@@ -288,6 +323,9 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
   $EventsTable createAlias(String alias) {
     return $EventsTable(_db, alias);
   }
+
+  static TypeConverter<Map<String, dynamic>, String> $converter0 =
+      const JSONConverter();
 }
 
 class Horse extends DataClass implements Insertable<Horse> {
@@ -437,28 +475,34 @@ class Horse extends DataClass implements Insertable<Horse> {
 
   Horse copyWith(
           {String? registrationName,
-          String? registrationNumber,
-          String? sireRegistrationName,
-          String? damRegistrationName,
+          Value<String?> registrationNumber = const Value.absent(),
+          Value<String?> sireRegistrationName = const Value.absent(),
+          Value<String?> damRegistrationName = const Value.absent(),
           String? name,
           Sex? sex,
           DateTime? dateOfBirth,
           double? height,
-          Uint8List? photo,
-          DateTime? heat,
-          String? notes}) =>
+          Value<Uint8List?> photo = const Value.absent(),
+          Value<DateTime?> heat = const Value.absent(),
+          Value<String?> notes = const Value.absent()}) =>
       Horse(
         registrationName: registrationName ?? this.registrationName,
-        registrationNumber: registrationNumber ?? this.registrationNumber,
-        sireRegistrationName: sireRegistrationName ?? this.sireRegistrationName,
-        damRegistrationName: damRegistrationName ?? this.damRegistrationName,
+        registrationNumber: registrationNumber.present
+            ? registrationNumber.value
+            : this.registrationNumber,
+        sireRegistrationName: sireRegistrationName.present
+            ? sireRegistrationName.value
+            : this.sireRegistrationName,
+        damRegistrationName: damRegistrationName.present
+            ? damRegistrationName.value
+            : this.damRegistrationName,
         name: name ?? this.name,
         sex: sex ?? this.sex,
         dateOfBirth: dateOfBirth ?? this.dateOfBirth,
         height: height ?? this.height,
-        photo: photo ?? this.photo,
-        heat: heat ?? this.heat,
-        notes: notes ?? this.notes,
+        photo: photo.present ? photo.value : this.photo,
+        heat: heat.present ? heat.value : this.heat,
+        notes: notes.present ? notes.value : this.notes,
       );
   @override
   String toString() {

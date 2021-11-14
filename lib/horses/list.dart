@@ -3,7 +3,7 @@ import 'package:horse_app/horses/single.dart';
 
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
-import '../_utils.dart';
+import '../utils/utils.dart';
 import "../state/db.dart";
 
 class HorsesPage extends StatefulWidget {

@@ -22,12 +22,12 @@ Drawer appDrawer(BuildContext context, String root) {
             ),
             child: null),
         ListTile(
-          title: const Text('Logs'),
-          selected: root == '/logs',
+          title: const Text('Events'),
+          selected: root == '/events',
           leading: const Icon(Icons.list),
           onTap: () {
             Navigator.of(context)
-                .pushNamedAndRemoveUntil("/logs", (route) => false);
+                .pushNamedAndRemoveUntil("/events", (route) => false);
           },
         ),
         ListTile(

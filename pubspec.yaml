@@ -12,17 +12,35 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  sqflite: ^2.0.0+4
-  infinite_scroll_pagination: ^3.1.0
+
+  # CSV helper for writing out the database
   csv: ^5.0.0
+
+  # Fonts.
+  google_fonts: ^2.1.0
+
+  # Share functions for allowing us to let the user share
+  # files or anything else with other services. Is the easiest way
+  # to let users save files to their device.
+  share_plus: ^3.0.4
+
+  # Form management library, components and dependencies
   reactive_forms: ^10.6.2
   reactive_date_time_picker: ^0.1.6
-  google_fonts: ^2.1.0
-  share_plus: ^3.0.4
-  expandable: ^5.0.1
   image_picker: ^0.8.4+4
+
+  # Widget/framework that allows us to have lists
+  # that keep scrolling. We use this on the main pages.
+  infinite_scroll_pagination: ^3.1.0
+
+  # Widget that can be expanded to show more content.
+  # We use to collapse similar events
+  expandable: ^5.0.1
+
+  # Builds the app icon automatically
   flutter_launcher_icons: ^0.9.2
 
+  # Database 
   drift: ^1.0.1
   sqlite3_flutter_libs: ^0.5.0
   path_provider: ^2.0.0

@@ -42,7 +42,9 @@ extension HorseHelpers on Horse {
     return currentHeatEnd()?.isAfter(DateTime.now()) ?? false;
   }
 
-  // void setHeatDateFromPregnancy(DateTime date) {
-  //   this.heat = date.add(const Duration(days: 6));
-  // }
+  Horse updateHeatFromFoalingDate(DateTime foalingDate) {
+    return copyWith(
+      heat: Value(foalingDate.add(const Duration(days: 6))),
+    );
+  }
 }

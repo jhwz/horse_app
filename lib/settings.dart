@@ -1,8 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:horse_app/_utils.dart';
-import 'package:horse_app/db.dart';
+import 'package:horse_app/utils/utils.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -36,20 +35,20 @@ class SettingsPage extends StatelessWidget {
                   ),
                 );
 
-                var csvs = await DB.exportToCSV();
-                var horses = csvs[Tables.horses]!;
-                var events = csvs[Tables.events]!;
+                // var csvs = await DB.exportToCSV();
+                // var horses = csvs[Tables.horses]!;
+                // var events = csvs[Tables.events]!;
 
-                Directory tempDir = await getTemporaryDirectory();
-                String tempHorsesPath = tempDir.path + '/horses.csv';
-                File(tempHorsesPath).writeAsString(horses);
+                // Directory tempDir = await getTemporaryDirectory();
+                // String tempHorsesPath = tempDir.path + '/horses.csv';
+                // File(tempHorsesPath).writeAsString(horses);
 
-                String tempEventsPath = tempDir.path + '/events.csv';
-                File(tempEventsPath).writeAsString(events);
+                // String tempEventsPath = tempDir.path + '/events.csv';
+                // File(tempEventsPath).writeAsString(events);
 
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                await Share.shareFiles([tempHorsesPath, tempEventsPath],
-                    mimeTypes: ['text/csv', 'text/csv']);
+                // ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                // await Share.shareFiles([tempHorsesPath, tempEventsPath],
+                //     mimeTypes: ['text/csv', 'text/csv']);
                 showSuccess(context, "Files saved!");
               }),
           const Divider(
@@ -78,21 +77,21 @@ class SettingsPage extends StatelessWidget {
                   ),
                 );
 
-                var csvs = await DB.exportToCSV();
-                var horses = csvs[Tables.horses]!;
-                var events = csvs[Tables.events]!;
+                // var csvs = await DB.exportToCSV();
+                // var horses = csvs[Tables.horses]!;
+                // var events = csvs[Tables.events]!;
 
-                Directory tempDir = await getTemporaryDirectory();
-                String tempHorsesPath = tempDir.path + '/horses.csv';
-                File(tempHorsesPath).writeAsString(horses);
+                // Directory tempDir = await getTemporaryDirectory();
+                // String tempHorsesPath = tempDir.path + '/horses.csv';
+                // File(tempHorsesPath).writeAsString(horses);
 
-                String tempEventsPath = tempDir.path + '/events.csv';
-                File(tempEventsPath).writeAsString(events);
+                // String tempEventsPath = tempDir.path + '/events.csv';
+                // File(tempEventsPath).writeAsString(events);
 
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                await Share.shareFiles([tempHorsesPath, tempEventsPath],
-                    mimeTypes: ['text/csv', 'text/csv']);
-                showSuccess(context, "Files saved!");
+                // ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                // await Share.shareFiles([tempHorsesPath, tempEventsPath],
+                //     mimeTypes: ['text/csv', 'text/csv']);
+                // showSuccess(context, "Files saved!");
               }),
         ]));
   }

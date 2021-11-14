@@ -9,7 +9,10 @@ import 'state/db.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
+  print("init");
   DB = AppDb();
+  print("start");
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -19,7 +22,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Whitehall Gypsy Cobs',
       theme: ThemeData(
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(
@@ -33,14 +35,13 @@ class MyApp extends StatelessWidget {
         ),
         primarySwatch: Colors.deepOrange,
       ),
-      initialRoute: "/logs",
+      initialRoute: "/events",
       onGenerateRoute: (settings) {
         // logs page, also the default
-        if (settings.name == null || settings.name == '/logs') {
+        if (settings.name == null || settings.name == '/events') {
           return MaterialPageRoute(builder: (context) => const EventsPage());
         }
 
-        // horses page
         if (settings.name == '/horses') {
           return MaterialPageRoute(builder: (context) => const HorsesPage());
         }

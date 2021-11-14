@@ -1,4 +1,6 @@
+import 'dart:collection';
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
@@ -7,6 +9,7 @@ import 'package:path/path.dart' as p;
 
 part 'db.g.dart';
 part 'horse_ext.dart';
+part 'event_ext.dart';
 
 enum Sex { unknown, male, female }
 
@@ -40,6 +43,7 @@ class Events extends Table {
       .customConstraint('NOT NULL REFERENCES horses(registration_name)')();
   DateTimeColumn get date => dateTime().clientDefault(() => DateTime.now())();
   TextColumn get notes => text().nullable()();
+  TextColumn get extra => text().map(const JSONConverter()).nullable()();
 }
 
 // composed rows on joins
@@ -53,6 +57,16 @@ class EventHorse extends Event {
           id: event.id,
           registrationName: event.registrationName,
         );
+}
+
+class JSONConverter extends TypeConverter<Map<String, dynamic>, String> {
+  const JSONConverter();
+  @override
+  Map<String, dynamic>? mapToDart(String? fromDb) =>
+      fromDb == null ? null : json.decode(fromDb);
+
+  @override
+  String mapToSql(Map<String, dynamic>? value) => json.encode(value);
 }
 
 late AppDb DB;

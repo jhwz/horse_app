@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:horse_app/events/types/types.dart';
+import 'package:reactive_date_time_picker/reactive_date_time_picker.dart';
 
 import 'package:reactive_forms/reactive_forms.dart';
 
-import '../_utils.dart';
+import '../utils/utils.dart';
 import "../state/db.dart";
 
 class NewEventPage extends StatefulWidget {
@@ -12,21 +14,42 @@ class NewEventPage extends StatefulWidget {
   State<StatefulWidget> createState() => _NewEventPageState();
 }
 
-// This is disgusting...
 class _NewEventPageState extends State<NewEventPage> {
   static const String _title = 'New Event';
   int _index = 0;
-  String _type = '';
+  late ET event;
   final List<Horse> _horses = [];
   List<Horse> _allHorses = [];
   bool _selectAllHorses = false;
-  static final Set<String> _eventCanOnlyHaveOneHorse = {
-    EventType.foaling,
-    EventType.pregnancyScans,
-  };
 
   FormGroup form = FormGroup({});
   Widget? widgetsForForm;
+
+  Future<void> _createEvent() async {
+    if (_horses.isNotEmpty) {
+      // create a unique event for each horse
+      List<Event> events = _horses.map<Event>((h) {
+        var map = form.value;
+        map["registrationName"] = h.registrationName;
+        return Event.fromData(map);
+      }).toList();
+
+      // add all the events to the database
+      await Future.wait(events.map((e) => DB.createEvent(e)));
+
+      // if this is a special event, create some actions from it.
+      if (event!.type == ET.foaling.type) {
+        for (var h in _horses) {
+          try {
+            event!.onCreate(h);
+          } catch (e) {
+            showError(context, "Something went wrong: $e");
+          }
+        }
+      }
+    }
+    Navigator.pop(context);
+  }
 
   Future<bool> _loadHorses() async {
     if (_allHorses.isNotEmpty) {
@@ -39,19 +62,19 @@ class _NewEventPageState extends State<NewEventPage> {
     return true;
   }
 
-  static final RegExp numberRegex = RegExp(r'^-?[0-9]+$');
-  Map<String, dynamic>? optionalNumber(AbstractControl<dynamic> control) {
-    return (control.value != null) &&
-            !numberRegex.hasMatch(control.value.toString())
-        ? <String, dynamic>{ValidationMessage.number: true}
-        : null;
-  }
-
-  void _constructForm(String _type) {
+  void _constructForm(ET event) {
     Map<String, AbstractControl<dynamic>> controls = {
-      'notes': FormControl<String>()
+      'notes': FormControl<String>(),
+      'date': FormControl<DateTime>(value: DateTime.now()),
+      'extra': event.fields({}),
     };
     List<Widget> children = [
+      ReactiveDateTimePicker(
+        formControlName: 'date',
+        decoration: const InputDecoration(
+          labelText: 'Time of event (defaults to now)',
+        ),
+      ),
       ReactiveTextField(
         formControlName: 'notes',
         maxLines: 5,
@@ -59,95 +82,9 @@ class _NewEventPageState extends State<NewEventPage> {
           labelText: 'Event notes (optional)',
         ),
       ),
+      ...event.formFields(),
     ];
-    switch (_type) {
-      case 'drench':
-        controls[EventsTable.drench_type] =
-            FormControl<String>(validators: [Validators.required]);
-        children.add(ReactiveTextField(
-          formControlName: EventsTable.drench_type,
-          decoration: const InputDecoration(
-            labelText: 'Drench Type',
-          ),
-        ));
-        break;
 
-      case EventType.miteTreatment:
-        controls[EventsTable.miteTreatment_type] =
-            FormControl<String>(validators: [Validators.required]);
-        children.add(ReactiveTextField(
-          formControlName: EventsTable.miteTreatment_type,
-          decoration: const InputDecoration(
-            labelText: 'Treatment Type',
-          ),
-        ));
-        break;
-
-      case EventType.foaling:
-        controls[EventsTable.foaling_foalColour] =
-            FormControl<String>(validators: [Validators.required]);
-        controls[EventsTable.sireRegistrationName] =
-            FormControl<String>(validators: [Validators.required]);
-        controls[EventsTable.foaling_foalSex] =
-            FormControl<Sex>(validators: [Validators.required]);
-
-        children.addAll([
-          ReactiveTextField(
-            formControlName: EventsTable.foaling_foalColour,
-            decoration: const InputDecoration(
-              labelText: 'Foal Colour',
-            ),
-          ),
-          ReactiveTextField(
-            formControlName: EventsTable.sireRegistrationName,
-            decoration: const InputDecoration(
-              labelText: 'Sire Registration Name',
-            ),
-          ),
-          ReactiveDropdownField(
-            formControlName: EventsTable.foaling_foalSex,
-            items: const [
-              DropdownMenuItem(value: Sex.female, child: Text('Female')),
-              DropdownMenuItem(value: Sex.male, child: Text('Male')),
-            ],
-            decoration: const InputDecoration(
-              labelText: 'Sex',
-              helperText: '',
-            ),
-          ),
-        ]);
-        break;
-
-      case EventType.pregnancyScans:
-        controls[EventsTable.pregnancy_inFoal] = FormControl<bool>();
-        controls[EventsTable.pregnancy_numDays] =
-            FormControl<String>(validators: [optionalNumber]);
-        controls[EventsTable.sireRegistrationName] = FormControl<String>();
-
-        children.addAll([
-          ReactiveCheckboxListTile(
-            formControlName: EventsTable.pregnancy_inFoal,
-            title: const Text('In foal?'),
-          ),
-          ReactiveTextField(
-            formControlName: EventsTable.pregnancy_numDays,
-            decoration: const InputDecoration(
-              labelText: 'Days since conception',
-            ),
-            validationMessages: (control) => {
-              ValidationMessage.required: 'Please enter a number',
-              ValidationMessage.number: 'Please enter a number',
-            },
-          ),
-          ReactiveTextField(
-            formControlName: EventsTable.sireRegistrationName,
-            decoration: const InputDecoration(
-              labelText: 'Sire Registration Name',
-            ),
-          ),
-        ]);
-        break;
-    }
     form = FormGroup(controls);
 
     widgetsForForm = ReactiveForm(
@@ -160,23 +97,6 @@ class _NewEventPageState extends State<NewEventPage> {
             .toList(),
       ),
     );
-  }
-
-  Future<void> _createEvent() async {
-    if (_horses.isNotEmpty) {
-      List<Event> events = _horses
-          .map((h) => createEventFromMap(form.value, h, eventType: _type))
-          .toList();
-      await Future.wait(events.map((e) => DB.createEvent(e)));
-
-      if (_type == EventType.foaling) {
-        for (var h in _horses) {
-          h.setHeatDateFromPregnancy(DateTime.now());
-          await DB.updateHorse(h);
-        }
-      }
-    }
-    Navigator.pop(context);
   }
 
   @override
@@ -231,38 +151,16 @@ class _NewEventPageState extends State<NewEventPage> {
           Step(
             isActive: _index == 0,
             state: _index == 0 ? StepState.editing : StepState.complete,
-            title: Text(_index == 0 ? 'Event Type' : formatStr(_type)),
-            content:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Padding(
-                  child: Text('Select the event type'),
-                  padding: EdgeInsets.only(bottom: 8.0)),
-              ...EventType.order
-                  .map(
-                    (e) => Container(
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Theme.of(context).dividerColor,
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                      child: ListTile(
-                        visualDensity: VisualDensity.comfortable,
-                        title: Text(formatStr(e)),
-                        onTap: () {
-                          setState(() {
-                            _type = e;
-                            _constructForm(_type);
-                            _index += 1;
-                          });
-                        },
-                      ),
-                    ),
-                  )
-                  .toList()
-            ]),
+            title: Text(_index == 0 ? 'Event Type' : formatStr(event.type)),
+            content: Step1(
+              onTap: (e) {
+                setState(() {
+                  event = e;
+                  _constructForm(e);
+                  _index += 1;
+                });
+              },
+            ),
           ),
 
           //
@@ -283,41 +181,24 @@ class _NewEventPageState extends State<NewEventPage> {
                     return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Padding(
-                            child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(_eventCanOnlyHaveOneHorse.contains(_type)
-                                      ? 'Select a horse for the event'
-                                      : 'Select relevant horses'),
-                                  _eventCanOnlyHaveOneHorse.contains(_type)
-                                      ? const SizedBox.shrink()
-                                      : Checkbox(
-                                          value: _selectAllHorses,
-                                          onChanged: (v) {
-                                            setState(() {
-                                              _selectAllHorses = v!;
-                                              if (_selectAllHorses) {
-                                                _horses.addAll(_allHorses);
-                                              } else {
-                                                _horses.clear();
-                                              }
-                                            });
-                                          },
-                                        )
-                                ]),
-                            padding: const EdgeInsets.only(bottom: 8.0),
+                          Step2Header(
+                            onSelect: (v) {
+                              setState(() {
+                                _selectAllHorses = v!;
+                                if (_selectAllHorses) {
+                                  _horses.addAll(_allHorses);
+                                } else {
+                                  _horses.clear();
+                                }
+                              });
+                            },
+                            isSelected: _selectAllHorses,
+                            onlyOneHorse: event.onlyAppliesToOne,
                           ),
                           ..._allHorses
-                              .where((h) {
-                                return _type == EventType.foaling ||
-                                        _type == EventType.pregnancyScans
-                                    ? h.sex == Sex.female
-                                    : true;
-                              })
+                              .where(event.appliesTo)
                               .map(
-                                (e) => Container(
+                                (h) => Container(
                                   decoration: BoxDecoration(
                                     border: Border(
                                       bottom: BorderSide(
@@ -327,23 +208,23 @@ class _NewEventPageState extends State<NewEventPage> {
                                     ),
                                   ),
                                   child: CheckboxListTile(
-                                    value: _horses.any((h) =>
-                                        h.registrationName ==
-                                        e.registrationName),
-                                    title: Text(e.name),
+                                    value: _horses.any((h2) =>
+                                        h2.registrationName ==
+                                        h.registrationName),
+                                    title: Text(h.name),
                                     onChanged: (bool? checked) {
                                       setState(() {
+                                        // if the event only applies to one horse, deselect the other horses
                                         if (checked == true &&
-                                            _eventCanOnlyHaveOneHorse
-                                                .contains(_type)) {
+                                            event.onlyAppliesToOne) {
                                           _horses.clear();
                                         }
                                         if (checked == true) {
-                                          _horses.add(e);
+                                          _horses.add(h);
                                         } else {
-                                          _horses.removeWhere((h) =>
-                                              h.registrationName ==
-                                              e.registrationName);
+                                          _horses.removeWhere((h2) =>
+                                              h2.registrationName ==
+                                              h.registrationName);
                                         }
                                       });
                                     },
@@ -411,6 +292,71 @@ class CreateEventSubmitButton extends StatelessWidget {
           child: Text('Create Event'),
         ),
       ),
+    );
+  }
+}
+
+class Step1 extends StatelessWidget {
+  final void Function(ET) onTap;
+
+  const Step1({
+    Key? key,
+    required this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Padding(
+          child: Text('Select the event type'),
+          padding: EdgeInsets.only(bottom: 8.0)),
+      ...ET.types
+          .map(
+            (e) => Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Theme.of(context).dividerColor,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: ListTile(
+                visualDensity: VisualDensity.comfortable,
+                title: Text(formatStr(e.type)),
+                onTap: () => onTap(e),
+              ),
+            ),
+          )
+          .toList()
+    ]);
+  }
+}
+
+class Step2Header extends StatelessWidget {
+  final void Function(bool?) onSelect;
+  final bool isSelected;
+  final bool onlyOneHorse;
+
+  const Step2Header({
+    Key? key,
+    required this.onSelect,
+    required this.isSelected,
+    required this.onlyOneHorse,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text(onlyOneHorse
+            ? 'Select a horse for the event'
+            : 'Select relevant horses'),
+        onlyOneHorse
+            ? const SizedBox.shrink()
+            : Checkbox(value: isSelected, onChanged: onSelect)
+      ]),
+      padding: const EdgeInsets.only(bottom: 8.0),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 
 import 'package:reactive_forms/reactive_forms.dart';
@@ -34,7 +35,9 @@ class _HorseHeatPage extends State<HorseHeatPage> {
         return;
       }
       var raw = event['heat'];
-      horse = horse.copyWith(heat: raw is DateTime ? raw : null);
+      horse = horse.copyWith(
+          heat:
+              raw is DateTime ? drift.Value(raw) : const drift.Value.absent());
       try {
         await DB.updateHorse(horse);
       } catch (e) {

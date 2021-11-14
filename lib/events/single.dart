@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../_utils.dart';
+import '../utils/utils.dart';
 import "../state/db.dart";
 
 class EventSummaryPage extends StatefulWidget {
-  final Event event;
+  final EventHorse event;
 
   const EventSummaryPage({Key? key, required this.event}) : super(key: key);
 
@@ -12,7 +12,6 @@ class EventSummaryPage extends StatefulWidget {
   State<StatefulWidget> createState() => _EventSummaryPageState();
 }
 
-// This is disgusting...
 class _EventSummaryPageState extends State<EventSummaryPage> {
   static const String _title = 'Log Summary';
 
@@ -33,38 +32,38 @@ class _EventSummaryPageState extends State<EventSummaryPage> {
       );
     }
 
-    if (e is DrenchEvent) {
-      out.add(textWidget("Drench Type", e.drenchType));
-    } else if (e is FarrierEvent) {
-      //
-    } else if (e is MiteTreatmentEvent) {
-      out.add(textWidget("Mite Treatment Type", e.miteTreatmentType));
-    } else if (e is DentistEvent) {
-      //
-    } else if (e is FoalingEvent) {
-      out.add(textWidget("Foal Sex", e.foalSex.toSexString()));
-      out.add(textWidget("Foal Colour", e.foalColour));
-      out.add(textWidget("Foal Sire", e.sireRegistrationName));
-    } else if (e is FeedEvent) {
-      //
-    } else if (e is VetEvent) {
-      //
-    } else if (e is PregnancyScans) {
-      out.add(
-          textWidget(null, e.inFoal ? "In Foal" : "Not In Foal", bold: true));
-      out.add(textWidget("Days in foal", e.numberOfDays.toString()));
+    // if (e is DrenchEvent) {
+    //   out.add(textWidget("Drench Type", e.drenchType));
+    // } else if (e is FarrierEvent) {
+    //   //
+    // } else if (e is MiteTreatmentEvent) {
+    //   out.add(textWidget("Mite Treatment Type", e.miteTreatmentType));
+    // } else if (e is DentistEvent) {
+    //   //
+    // } else if (e is FoalingEvent) {
+    //   out.add(textWidget("Foal Sex", e.foalSex.toSexString()));
+    //   out.add(textWidget("Foal Colour", e.foalColour));
+    //   out.add(textWidget("Foal Sire", e.sireRegistrationName));
+    // } else if (e is FeedEvent) {
+    //   //
+    // } else if (e is VetEvent) {
+    //   //
+    // } else if (e is PregnancyScans) {
+    //   out.add(
+    //       textWidget(null, e.inFoal ? "In Foal" : "Not In Foal", bold: true));
+    //   out.add(textWidget("Days in foal", e.numberOfDays.toString()));
 
-      if (e.inFoal) {
-        if (e.numberOfDays != null) {
-          var conception = e.date.subtract(Duration(days: e.numberOfDays!));
-          var estimateFoaling = conception.add(const Duration(days: 338));
+    //   if (e.inFoal) {
+    //     if (e.numberOfDays != null) {
+    //       var conception = e.date.subtract(Duration(days: e.numberOfDays!));
+    //       var estimateFoaling = conception.add(const Duration(days: 338));
 
-          out.add(textWidget("Estimate Conception", conception.date()));
-          out.add(textWidget("Estimate Foaling Date", estimateFoaling.date()));
-        }
-        out.add(textWidget("Foal Sire", e.sireRegistrationName ?? "N/A"));
-      }
-    }
+    //       out.add(textWidget("Estimate Conception", conception.date()));
+    //       out.add(textWidget("Estimate Foaling Date", estimateFoaling.date()));
+    //     }
+    //     out.add(textWidget("Foal Sire", e.sireRegistrationName ?? "N/A"));
+    //   }
+    // }
 
     out = out
         .map<Widget>((w) => Padding(

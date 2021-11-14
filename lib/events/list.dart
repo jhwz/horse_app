@@ -1,11 +1,12 @@
 import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:horse_app/events/create.dart';
+import 'package:horse_app/events/list_item.dart';
 import 'package:horse_app/events/single.dart';
 
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
-import '../_utils.dart';
+import '../utils/utils.dart';
 import "../state/db.dart";
 
 class EventsPage extends StatefulWidget {
@@ -115,7 +116,7 @@ class _EventsPageState extends State<EventsPage> {
     }
   }
 
-  Future<void> _onTap(Event e) async {
+  Future<void> _onTap(EventHorse e) async {
     await Navigator.push(context, MaterialPageRoute(builder: (context) {
       return EventSummaryPage(event: e);
     }));
@@ -192,60 +193,5 @@ class _EventsPageState extends State<EventsPage> {
   void dispose() {
     _pagingController.dispose();
     super.dispose();
-  }
-}
-
-class EventListItem extends StatelessWidget {
-  final EventHorse event;
-  final Function(Event) onTap;
-
-  const EventListItem({Key? key, required this.event, required this.onTap})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(
-        formatStr(event.type),
-        style: const TextStyle(fontWeight: FontWeight.w500),
-      ),
-      subtitle: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [Text(event.horse.name), Text(event.date.date())]),
-      isThreeLine: true,
-      onTap: () {
-        onTap(event);
-      },
-    );
-  }
-}
-
-class EventListGroup extends StatelessWidget {
-  final Function(Event) onTap;
-  final List<EventHorse> events;
-
-  const EventListGroup({Key? key, required this.events, required this.onTap})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ExpandablePanel(
-      header: ListTile(
-        title: Text(
-          formatStr(events[0].type),
-          style: const TextStyle(fontWeight: FontWeight.w700),
-        ),
-        subtitle:
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('${events.length} horses'),
-        ]),
-        isThreeLine: true,
-      ),
-      collapsed: const SizedBox.shrink(),
-      expanded: Column(
-        children:
-            events.map((e) => EventListItem(event: e, onTap: onTap)).toList(),
-      ),
-    );
   }
 }

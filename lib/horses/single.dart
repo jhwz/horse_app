@@ -1,13 +1,14 @@
 import 'dart:typed_data';
 
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:horse_app/horses/heat.dart';
 
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:reactive_date_time_picker/reactive_date_time_picker.dart';
-import '../reactive_image_picker2.dart';
+import '../utils/reactive_image_picker.dart';
 
-import '../_utils.dart';
+import '../utils/utils.dart';
 import "../state/db.dart";
 
 // Widget for adding a new horse
@@ -132,7 +133,8 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                                       HorseHeatPage(horse: horse!)));
 
                           setState(() {
-                            horse = horse!.copyWith(heat: next?.heat);
+                            horse =
+                                horse!.copyWith(heat: drift.Value(next?.heat));
                           });
                         },
                         shape: const RoundedRectangleBorder(
