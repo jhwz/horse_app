@@ -8,8 +8,9 @@ class NoopEvent extends ET {
   NoopEvent(this._type);
 
   @override
-  FormGroup fields(Map<String, dynamic>? defaultVals) {
-    return FormGroup({});
+  Map<String, AbstractControl<dynamic>> fields(
+      Map<String, dynamic>? defaultVals) {
+    return {};
   }
 
   @override

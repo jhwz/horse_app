@@ -10,13 +10,14 @@ class MiteTreatmentEvent extends ET {
   String get type => "miteTreatment";
 
   @override
-  FormGroup fields(Map<String, dynamic>? defaultVals) {
-    return FormGroup({
+  Map<String, AbstractControl<dynamic>> fields(
+      Map<String, dynamic>? defaultVals) {
+    return {
       miteTreatmentType: FormControl(
         value: defaultVals?[miteTreatmentType] ?? '',
         validators: [Validators.required],
       ),
-    });
+    };
   }
 
   @override

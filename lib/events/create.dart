@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:horse_app/events/types/types.dart';
 import 'package:reactive_date_time_picker/reactive_date_time_picker.dart';
@@ -28,20 +29,26 @@ class _NewEventPageState extends State<NewEventPage> {
   Future<void> _createEvent() async {
     if (_horses.isNotEmpty) {
       // create a unique event for each horse
-      List<Event> events = _horses.map<Event>((h) {
+      List<EventsCompanion> events = _horses.map<EventsCompanion>((h) {
         var map = form.value;
-        map["registrationName"] = h.registrationName;
-        return Event.fromData(map);
+        var e = EventsCompanion(
+          date: Value(map["date"] as DateTime),
+          registrationName: Value(h.registrationName),
+          type: Value(event.type),
+          notes: Value(map["notes"] is String ? map["notes"] as String : null),
+        );
+
+        return e;
       }).toList();
 
       // add all the events to the database
       await Future.wait(events.map((e) => DB.createEvent(e)));
 
       // if this is a special event, create some actions from it.
-      if (event!.type == ET.foaling.type) {
+      if (event.type == ET.foaling.type) {
         for (var h in _horses) {
           try {
-            event!.onCreate(h);
+            event.onCreate(h);
           } catch (e) {
             showError(context, "Something went wrong: $e");
           }
@@ -66,7 +73,7 @@ class _NewEventPageState extends State<NewEventPage> {
     Map<String, AbstractControl<dynamic>> controls = {
       'notes': FormControl<String>(),
       'date': FormControl<DateTime>(value: DateTime.now()),
-      'extra': event.fields({}),
+      ...event.fields(null),
     };
     List<Widget> children = [
       ReactiveDateTimePicker(

@@ -18,19 +18,21 @@ class HorseHeatPage extends StatefulWidget {
 
 class _HorseHeatPage extends State<HorseHeatPage> {
   late final FormGroup form;
+  late Horse horse;
 
   String? updateErr;
 
   @override
   initState() {
     super.initState();
-    var horse = widget.horse;
+    horse = widget.horse;
 
     form = FormGroup({
       'heat': FormControl<DateTime>(value: horse.nextHeatStart()),
     });
 
     form.valueChanges.listen((event) async {
+      print("updating");
       if (event == null) {
         return;
       }
@@ -39,6 +41,7 @@ class _HorseHeatPage extends State<HorseHeatPage> {
           heat:
               raw is DateTime ? drift.Value(raw) : const drift.Value.absent());
       try {
+        print("updating $raw");
         await DB.updateHorse(horse);
       } catch (e) {
         setState(() {
@@ -53,8 +56,6 @@ class _HorseHeatPage extends State<HorseHeatPage> {
 
   @override
   Widget build(BuildContext context) {
-    final horse = widget.horse;
-
     final inHeat = horse.isInHeat();
 
     List<Widget> children = [];

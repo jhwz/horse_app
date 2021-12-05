@@ -3,7 +3,7 @@ import 'package:horse_app/state/db.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 import 'types.dart';
-import '../../utils/validators.dart';
+import '../../reactive/validators.dart';
 
 class PregnancyEvent extends ET {
   static String inFoal = "inFoal";
@@ -22,13 +22,14 @@ class PregnancyEvent extends ET {
   }
 
   @override
-  FormGroup fields(Map<String, dynamic>? defaultVals) {
-    return FormGroup({
+  Map<String, AbstractControl<dynamic>> fields(
+      Map<String, dynamic>? defaultVals) {
+    return {
       inFoal: FormControl<bool>(),
       numDays:
           FormControl<String>(validators: [CustomValidators.optionalNumber]),
       sireRegistrationName: FormControl<String>(),
-    });
+    };
   }
 
   @override

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:horse_app/horses/create.dart';
 import 'package:horse_app/horses/single.dart';
 
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
@@ -130,10 +131,8 @@ class _HorsesPageState extends State<HorsesPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          await Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const HorseProfilePage()));
+          await Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const CreateHorsePage()));
           // refresh the page
           _pagingController.refresh();
         },
@@ -152,51 +151,57 @@ class _HorsesPageState extends State<HorsesPage> {
 
 class HorseListItem extends StatelessWidget {
   final Horse horse;
-  final Function(String) onDelete;
+  final Function(String)? onDelete;
   final Function(Horse) onTap;
 
   const HorseListItem(
-      {Key? key,
-      required this.horse,
-      required this.onDelete,
-      required this.onTap})
+      {Key? key, required this.horse, this.onDelete, required this.onTap})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding:
-          const EdgeInsets.only(left: 8, right: 16, top: 0, bottom: 0),
-      minVerticalPadding: 0,
-      leading: horse.photo != null ? Image.memory(horse.photo!) : null,
-      title: Text(horse.name),
-      subtitle: Text(
-          '${horse.registrationName} - ${DateTime.now().difference(horse.dateOfBirth).inDays ~/ 365} years old'),
-      isThreeLine: true,
-      onTap: () {
-        onTap(horse);
-      },
-      trailing: PopupMenuButton<String>(
-        icon: const Icon(Icons.more_vert),
-        onSelected: (String value) async {
-          if (value == 'Delete') {
-            try {
-              await DB.deleteHorse(horse.registrationName);
-              onDelete(horse.registrationName);
-              showSuccess(context, 'Deleted');
-            } catch (e) {
-              showError(context, 'Deleting failed: ${e.toString()}');
-            }
-          }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      child: ListTile(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
+        tileColor: Theme.of(context).colorScheme.surface,
+        contentPadding:
+            const EdgeInsets.only(left: 8, right: 16, top: 0, bottom: 0),
+        minVerticalPadding: 0,
+        leading: horse.photo != null ? Image.memory(horse.photo!) : null,
+        title: Text(horse.name),
+        subtitle: Text(
+            '${horse.registrationName} - ${DateTime.now().difference(horse.dateOfBirth).inDays ~/ 365} years old'),
+        isThreeLine: true,
+        onTap: () {
+          onTap(horse);
         },
-        itemBuilder: (BuildContext context) {
-          return {'Delete'}.map((String choice) {
-            return PopupMenuItem<String>(
-              value: choice,
-              child: Text(choice),
-            );
-          }).toList();
-        },
+        trailing: onDelete != null
+            ? PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (String value) async {
+                  if (value == 'Delete') {
+                    try {
+                      await DB.deleteHorse(horse.registrationName);
+                      onDelete!(horse.registrationName);
+                      showSuccess(context, 'Deleted');
+                    } catch (e) {
+                      showError(context, 'Deleting failed: ${e.toString()}');
+                    }
+                  }
+                },
+                itemBuilder: (BuildContext context) {
+                  return {'Delete'}.map((String choice) {
+                    return PopupMenuItem<String>(
+                      value: choice,
+                      child: Text(choice),
+                    );
+                  }).toList();
+                },
+              )
+            : null,
       ),
     );
   }

@@ -10,13 +10,14 @@ class DrenchEvent extends ET {
   String get type => "drench";
 
   @override
-  FormGroup fields(Map<String, dynamic>? defaultVals) {
-    return FormGroup({
+  Map<String, AbstractControl<dynamic>> fields(
+      Map<String, dynamic>? defaultVals) {
+    return {
       drenchType:
           FormControl(value: defaultVals?[drenchType] ?? '', validators: [
         Validators.required,
       ]),
-    });
+    };
   }
 
   @override

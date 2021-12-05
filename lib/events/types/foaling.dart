@@ -27,8 +27,9 @@ class FoalingEvent extends ET {
   }
 
   @override
-  FormGroup fields(Map<String, dynamic>? defaultVals) {
-    return FormGroup({
+  Map<String, AbstractControl<dynamic>> fields(
+      Map<String, dynamic>? defaultVals) {
+    return {
       foalColour: FormControl<String>(
         value: defaultVals?[foalColour] ?? '',
         validators: [Validators.required],
@@ -39,7 +40,7 @@ class FoalingEvent extends ET {
       foalSex: FormControl<int>(
           value: defaultVals?[foalSex] ?? '',
           validators: [Validators.required]),
-    });
+    };
   }
 
   @override

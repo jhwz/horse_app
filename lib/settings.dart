@@ -93,6 +93,10 @@ class SettingsPage extends StatelessWidget {
                 //     mimeTypes: ['text/csv', 'text/csv']);
                 // showSuccess(context, "Files saved!");
               }),
+          ListTile(
+            title: Text('Theme'),
+            leading: const Icon(Icons.file_upload),
+          ),
         ]));
   }
 }

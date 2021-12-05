@@ -1,40 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'events/list.dart';
 import 'horses/list.dart';
 import 'settings.dart';
 import 'state/db.dart';
+import 'theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  print("init");
   DB = AppDb();
-  print("start");
-  runApp(const MyApp());
+  runApp(const App());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+class App extends StatelessWidget {
+  const App({Key? key}) : super(key: key);
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          isDense: true,
-        ),
-        fontFamily: GoogleFonts.montserrat().fontFamily,
-        snackBarTheme: const SnackBarThemeData(
-          behavior: SnackBarBehavior.floating,
-        ),
-        primarySwatch: Colors.deepOrange,
-      ),
+      theme: darkTheme(),
+      darkTheme: darkTheme(),
+      themeMode: ThemeMode.system,
       initialRoute: "/events",
       onGenerateRoute: (settings) {
         // logs page, also the default

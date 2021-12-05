@@ -50,7 +50,7 @@ abstract class ET {
   String get type;
 
   // the reactive forms fields for the event
-  FormGroup fields(Map<String, dynamic>? defaultVals);
+  Map<String, AbstractControl<dynamic>> fields(Map<String, dynamic>? defaultVals);
 
   // the corresponding widgets for the above fields, tightly coupled
   // with the above fields

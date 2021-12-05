@@ -1,10 +1,10 @@
-import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
 import 'package:horse_app/events/create.dart';
 import 'package:horse_app/events/list_item.dart';
 import 'package:horse_app/events/single.dart';
 
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 import '../utils/utils.dart';
 import "../state/db.dart";
@@ -17,11 +17,12 @@ class EventsPage extends StatefulWidget {
 }
 
 class _EventsPageState extends State<EventsPage> {
-  static String title = 'Events';
-
+  static String title = "Events";
   // handles the search bar at the top
   Widget searchBarOrTitle = Text(title);
   Icon searchIconOrCancel = const Icon(Icons.search);
+
+  DateTime _focusedDay = DateTime.now();
 
   // state for infinite loading of the entries
   static const _pageSize = 20;
@@ -47,8 +48,8 @@ class _EventsPageState extends State<EventsPage> {
           0;
 
       // fetch the horses
-      var events = await DB.listPastEvents(
-          filter: filter, offset: pageKey, limit: _pageSize);
+      var events = await DB.listEvents(
+          filter: filter, offset: pageKey, limit: _pageSize, now: _focusedDay);
 
       if (events.isEmpty) {
         _pagingController.appendLastPage([]);
@@ -85,8 +86,11 @@ class _EventsPageState extends State<EventsPage> {
         while_loop:
         while (!isLastPage) {
           pageKey += _pageSize;
-          var eventsNext = await DB.listPastEvents(
-              filter: filter, offset: pageKey, limit: _pageSize);
+          var eventsNext = await DB.listEvents(
+              filter: filter,
+              offset: pageKey,
+              limit: _pageSize,
+              now: _focusedDay);
           isLastPage = eventsNext.length < _pageSize;
           for (int i = 0; i < eventsNext.length; i++) {
             if (curr.last.type == eventsNext[i].type &&
@@ -160,21 +164,101 @@ class _EventsPageState extends State<EventsPage> {
           )
         ],
       ),
-
       drawer: appDrawer(context, "/logs"),
-
-      body: Center(
-        child: PagedListView<int, dynamic>(
-          pagingController: _pagingController,
-          builderDelegate: PagedChildBuilderDelegate<dynamic>(
-            itemBuilder: (context, item, index) {
-              if (item is List<EventHorse>) {
-                return EventListGroup(events: item, onTap: _onTap);
-              }
-              return EventListItem(event: item, onTap: _onTap);
-            },
+      body: CustomScrollView(
+        slivers: <Widget>[
+          SliverList(
+            delegate: SliverChildListDelegate([
+              Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Theme.of(context).dividerColor,
+                      width: 2,
+                    ),
+                  ),
+                ),
+                child: TableCalendar(
+                  shouldFillViewport: false,
+                  firstDay: DateTime.utc(2010, 10, 16),
+                  lastDay: DateTime.utc(2030, 3, 14),
+                  focusedDay: _focusedDay,
+                  calendarFormat: CalendarFormat.week,
+                  selectedDayPredicate: (day) {
+                    return isSameDay(_focusedDay, day);
+                  },
+                  onDaySelected: (_, focusedDay) {
+                    setState(() {
+                      _focusedDay =
+                          focusedDay; // update `_focusedDay` here as well
+                      _pagingController.refresh();
+                    });
+                  },
+                  calendarStyle: CalendarStyle(
+                    // isTodayHighlighted: false,
+                    todayDecoration: BoxDecoration(
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.onBackground,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  calendarBuilders: CalendarBuilders(
+                    headerTitleBuilder: (context, day) {
+                      return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              day.monthYear(),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _focusedDay = DateTime.now();
+                                    _pagingController.refresh();
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  elevation: 1,
+                                  primary:
+                                      Theme.of(context).colorScheme.surface,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                child: Text("today",
+                                    style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
+                                    )))
+                          ]);
+                    },
+                  ),
+                  daysOfWeekVisible: false,
+                  availableCalendarFormats: const {
+                    CalendarFormat.week: '',
+                  },
+                ),
+              ),
+            ]),
           ),
-        ),
+          PagedSliverList<int, dynamic>(
+            pagingController: _pagingController,
+            builderDelegate: PagedChildBuilderDelegate<dynamic>(
+              itemBuilder: (context, item, index) {
+                if (item is List<EventHorse>) {
+                  return EventListGroup(events: item, onTap: _onTap);
+                }
+                return TopEventListItem(event: item, onTap: _onTap);
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -185,7 +269,27 @@ class _EventsPageState extends State<EventsPage> {
         },
         tooltip: 'Create Event',
         child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
+      // bottomNavigationBar: BottomNavigationBar(
+      //   items: const [
+      //     BottomNavigationBarItem(
+      //       icon: Icon(Icons.home),
+      //       title: Text('Home'),
+      //     ),
+      //     BottomNavigationBarItem(
+      //       icon: Icon(Icons.list),
+      //       title: Text('Events'),
+      //     ),
+      //   ],
+      //   currentIndex: 1,
+      //   onTap: (index) {
+      //     if (index == 0) {
+      //       Navigator.pushReplacementNamed(context, "/");
+      //     } else if (index == 2) {
+      //       Navigator.pushReplacementNamed(context, "/calendar");
+      //     }
+      //   },
+      // ),
     );
   }
 

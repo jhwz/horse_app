@@ -8,6 +8,41 @@ extension DateTimeFormatting on DateTime {
   String date() {
     return "$day/$month/${year.toString().substring(2)}";
   }
+
+  static const dayMap = [
+    'Unknown',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
+
+  static const monthMap = [
+    'Unknown',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+
+  String dayMonthYear() {
+    return '${dayMap[weekday]}, ${monthMap[month]} $year';
+  }
+
+  String monthYear() {
+    return '${monthMap[month]} $year';
+  }
 }
 
 // Helper function to return the app drawer
@@ -18,9 +53,15 @@ Drawer appDrawer(BuildContext context, String root) {
       children: [
         DrawerHeader(
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColorDark,
+              color: Theme.of(context).colorScheme.surface,
             ),
-            child: null),
+            child: Container(
+              padding: EdgeInsets.all(10),
+              // child: Text(
+              //   'Menu',
+              //   style: Theme.of(context).textTheme.headline6,
+              // ),
+            )),
         ListTile(
           title: const Text('Events'),
           selected: root == '/events',
@@ -57,7 +98,7 @@ void showSuccess(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(message),
-      backgroundColor: Theme.of(context).primaryColor,
+      backgroundColor: Colors.green,
     ),
   );
 }

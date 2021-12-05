@@ -82,6 +82,8 @@ class AppDb extends _$AppDb {
   // Horse queries
   // *******************
   Future<void> createHorse(Insertable<Horse> h) async {
+    print(h);
+
     await into(horses).insert(h);
   }
 
@@ -117,26 +119,22 @@ class AppDb extends _$AppDb {
   // Event queries
   // *******************
 
-  Future<List<EventHorse>> _listEvents(
+  Future<List<EventHorse>> listEvents(
       {String filter = '',
       int limit = 10,
       int offset = 0,
-      bool past = false}) async {
+      required DateTime now}) async {
     var eventQuery = (select(events)
           ..where((tbl) =>
               // past events
-              (past
-                  ? tbl.date.isSmallerOrEqualValue(DateTime.now())
-                  : tbl.date.isBiggerThanValue(DateTime.now())) &
+              (tbl.date.isSmallerOrEqualValue(now)) &
               // where the filter matches some key fields
               (tbl.registrationName.contains(filter) |
                   tbl.type.contains(filter) |
                   tbl.notes.contains(filter)))
           ..limit(limit, offset: offset)
           ..orderBy([
-            (t) => OrderingTerm(
-                expression: t.date,
-                mode: past ? OrderingMode.desc : OrderingMode.asc)
+            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)
           ]))
         .join([
       leftOuterJoin(
@@ -151,19 +149,7 @@ class AppDb extends _$AppDb {
     }).get();
   }
 
-  Future<List<EventHorse>> listPastEvents(
-      {String filter = '', int limit = 10, int offset = 0}) async {
-    return _listEvents(
-        filter: filter, limit: limit, offset: offset, past: true);
-  }
-
-  Future<List<EventHorse>> listFutureEvents(
-      {String filter = '', int limit = 10, int offset = 0}) async {
-    return _listEvents(
-        filter: filter, limit: limit, offset: offset, past: false);
-  }
-
-  Future<void> createEvent(Event e) async {
+  Future<void> createEvent(Insertable<Event> e) async {
     await into(events).insert(e);
   }
 }
