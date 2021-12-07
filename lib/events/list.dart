@@ -202,6 +202,9 @@ class _EventsPageState extends State<EventsPage> {
                       ),
                       shape: BoxShape.circle,
                     ),
+                    todayTextStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onBackground,
+                    ),
                   ),
                   calendarBuilders: CalendarBuilders(
                     headerTitleBuilder: (context, day) {

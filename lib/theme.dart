@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:horse_app/preferences.dart';
+
+final appThemeProvider =
+    StateProvider<ThemeMode>((ref) => ref.watch(preferences).themeMode);
 
 ThemeData darkTheme() {
   return ThemeData(

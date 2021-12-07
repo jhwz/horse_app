@@ -88,7 +88,7 @@ class _EventListGroupState extends State<EventListGroup> {
       ]),
       trailing:
           Icon(_expanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down),
-      isThreeLine: false,
+      isThreeLine: true,
     );
   }
 

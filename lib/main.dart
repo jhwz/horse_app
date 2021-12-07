@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:horse_app/preferences.dart';
 
 import 'events/list.dart';
 import 'horses/list.dart';
@@ -6,23 +8,30 @@ import 'settings.dart';
 import 'state/db.dart';
 import 'theme.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await initSharedPreferences();
+
   DB = AppDb();
-  runApp(const App());
+  runApp(const ProviderScope(child: App()));
 }
 
-class App extends StatelessWidget {
+class App extends ConsumerWidget {
   const App({Key? key}) : super(key: key);
+
+  @override
+  void initState() {}
 
   // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(appThemeProvider);
+
     return MaterialApp(
-      theme: darkTheme(),
+      theme: lightTheme(),
       darkTheme: darkTheme(),
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       initialRoute: "/events",
       onGenerateRoute: (settings) {
         // logs page, also the default
