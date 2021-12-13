@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:horse_app/events/create.dart';
 import 'package:horse_app/events/list_item.dart';
 import 'package:horse_app/events/single.dart';
+import 'package:horse_app/utils/app_bar_search.dart';
 
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -137,20 +138,11 @@ class _EventsPageState extends State<EventsPage> {
               setState(() {
                 if (searchIconOrCancel.icon == Icons.search) {
                   searchIconOrCancel = const Icon(Icons.cancel);
-                  searchBarOrTitle = ListTile(
-                    title: TextField(
-                      onChanged: (v) {
-                        filter = v;
-                        _pagingController.refresh();
-                      },
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        hintText: 'Filter...',
-                        border: InputBorder.none,
-                        fillColor: Theme.of(context).primaryColorLight,
-                        filled: true,
-                      ),
-                    ),
+                  searchBarOrTitle = AppBarSearch(
+                    onChanged: (v) {
+                      filter = v;
+                      _pagingController.refresh();
+                    },
                   );
                 } else {
                   searchIconOrCancel = const Icon(Icons.search);

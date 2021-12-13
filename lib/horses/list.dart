@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:horse_app/horses/create.dart';
+import 'package:horse_app/horses/list_item.dart';
 import 'package:horse_app/horses/single.dart';
+import 'package:horse_app/utils/app_bar_search.dart';
 
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
@@ -85,26 +87,19 @@ class _HorsesPageState extends State<HorsesPage> {
               setState(() {
                 if (searchIconOrCancel.icon == Icons.search) {
                   searchIconOrCancel = const Icon(Icons.cancel);
-                  searchBarOrTitle = ListTile(
-                    title: TextField(
-                      onChanged: (v) {
-                        filter = v;
-                        _pagingController.refresh();
-                      },
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        hintText: 'Filter...',
-                        border: InputBorder.none,
-                        fillColor: Theme.of(context).primaryColorLight,
-                        filled: true,
-                      ),
-                    ),
+                  searchBarOrTitle = AppBarSearch(
+                    onChanged: (v) {
+                      filter = v;
+                      _pagingController.refresh();
+                    },
                   );
                 } else {
                   searchIconOrCancel = const Icon(Icons.search);
                   searchBarOrTitle = Text(title);
-                  filter = '';
-                  _pagingController.refresh();
+                  if (filter != '') {
+                    filter = '';
+                    _pagingController.refresh();
+                  }
                 }
               });
             },
@@ -119,12 +114,33 @@ class _HorsesPageState extends State<HorsesPage> {
         child: PagedListView<int, Horse>(
           pagingController: _pagingController,
           builderDelegate: PagedChildBuilderDelegate<Horse>(
-            itemBuilder: (context, item, index) => HorseListItem(
-              horse: item,
-              onDelete: _onDelete,
+            itemBuilder: (context, horse, index) => HorseListItem(
+              horse: horse,
               onTap: (h) {
                 _onTap(context, index, h);
               },
+              trailing: PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (String value) async {
+                  if (value == 'Delete') {
+                    try {
+                      await DB.deleteHorse(horse.registrationName);
+                      _onDelete(horse.registrationName);
+                      showSuccess(context, 'Deleted');
+                    } catch (e) {
+                      showError(context, 'Deleting failed: ${e.toString()}');
+                    }
+                  }
+                },
+                itemBuilder: (BuildContext context) {
+                  return {'Delete'}.map((String choice) {
+                    return PopupMenuItem<String>(
+                      value: choice,
+                      child: Text(choice),
+                    );
+                  }).toList();
+                },
+              ),
             ),
           ),
         ),
@@ -146,63 +162,5 @@ class _HorsesPageState extends State<HorsesPage> {
   void dispose() {
     _pagingController.dispose();
     super.dispose();
-  }
-}
-
-class HorseListItem extends StatelessWidget {
-  final Horse horse;
-  final Function(String)? onDelete;
-  final Function(Horse) onTap;
-
-  const HorseListItem(
-      {Key? key, required this.horse, this.onDelete, required this.onTap})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      child: ListTile(
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-        ),
-        tileColor: Theme.of(context).colorScheme.surface,
-        contentPadding:
-            const EdgeInsets.only(left: 8, right: 16, top: 0, bottom: 0),
-        minVerticalPadding: 0,
-        leading: horse.photo != null ? Image.memory(horse.photo!) : null,
-        title: Text(horse.name),
-        subtitle: Text(
-            '${horse.registrationName} - ${DateTime.now().difference(horse.dateOfBirth).inDays ~/ 365} years old'),
-        isThreeLine: true,
-        onTap: () {
-          onTap(horse);
-        },
-        trailing: onDelete != null
-            ? PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert),
-                onSelected: (String value) async {
-                  if (value == 'Delete') {
-                    try {
-                      await DB.deleteHorse(horse.registrationName);
-                      onDelete!(horse.registrationName);
-                      showSuccess(context, 'Deleted');
-                    } catch (e) {
-                      showError(context, 'Deleting failed: ${e.toString()}');
-                    }
-                  }
-                },
-                itemBuilder: (BuildContext context) {
-                  return {'Delete'}.map((String choice) {
-                    return PopupMenuItem<String>(
-                      value: choice,
-                      child: Text(choice),
-                    );
-                  }).toList();
-                },
-              )
-            : null,
-      ),
-    );
   }
 }

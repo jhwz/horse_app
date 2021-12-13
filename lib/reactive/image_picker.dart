@@ -282,8 +282,8 @@ class ImagePickerWidget extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       ListTile(
-                        leading: Icon(Icons.photo_camera),
-                        title: Text('Take photo'),
+                        leading: const Icon(Icons.photo_camera),
+                        title: const Text('Take photo'),
                         onTap: () {
                           Navigator.of(context).pop();
                           _onImageButtonPressed(
@@ -293,8 +293,8 @@ class ImagePickerWidget extends StatelessWidget {
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.photo),
-                        title: Text('Choose from library'),
+                        leading: const Icon(Icons.photo),
+                        title: const Text('Choose from library'),
                         onTap: () {
                           Navigator.of(context).pop();
                           _onImageButtonPressed(
@@ -304,8 +304,8 @@ class ImagePickerWidget extends StatelessWidget {
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.clear),
-                        title: Text('Cancel'),
+                        leading: const Icon(Icons.clear),
+                        title: const Text('Cancel'),
                         onTap: Navigator.of(context).pop,
                       )
                     ],
@@ -325,28 +325,30 @@ class ImagePickerWidget extends StatelessWidget {
       return;
     }
 
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Delete image"),
-          content: Text("This action could not be undone"),
-          actions: [
-            TextButton(
-              child: Text("CLOSE"),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: Text("CONFIRM"),
-              onPressed: () {
-                onConfirm();
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+    onConfirm();
+
+    // showDialog<void>(
+    //   context: context,
+    //   builder: (BuildContext context) {
+    //     return AlertDialog(
+    //       title: Text("Delete image"),
+    //       content: Text("This action could not be undone"),
+    //       actions: [
+    //         TextButton(
+    //           child: Text("CLOSE"),
+    //           onPressed: () => Navigator.of(context).pop(),
+    //         ),
+    //         TextButton(
+    //           child: Text("CONFIRM"),
+    //           onPressed: () {
+    //             onConfirm();
+    //             Navigator.of(context).pop();
+    //           },
+    //         ),
+    //       ],
+    //     );
+    //   },
+    // );
   }
 
   Widget _buildImage(BuildContext context) {

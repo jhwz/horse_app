@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:horse_app/horses/heat.dart';
 import 'package:horse_app/reactive/validators.dart';
+import 'package:horse_app/utils/labelled_divider.dart';
 
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:reactive_date_time_picker/reactive_date_time_picker.dart';
@@ -23,8 +24,6 @@ class CreateHorsePage extends StatefulWidget {
 }
 
 class _CreateHorsePageState extends State<CreateHorsePage> {
-  static const String __validHands = 'validHands';
-
   Horse? horse;
 
   late final FormGroup form;
@@ -80,12 +79,12 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
                   ReactiveImagePicker(
                     formControlName: 'photo',
                     decoration: const InputDecoration(
-                        contentPadding: EdgeInsets.zero,
-                        filled: false,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        disabledBorder: InputBorder.none,
-                        helperText: ''),
+                      contentPadding: EdgeInsets.zero,
+                      filled: false,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                    ),
                     inputBuilder: (onPressed) => TextButton.icon(
                       onPressed: onPressed,
                       icon: const Icon(Icons.add),
@@ -96,7 +95,7 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
                   //
                   //
 
-                  const SectionLabel("Identification"),
+                  const LabelledDivider("Identification"),
                   ReactiveTextField(
                     readOnly: horse != null,
                     formControlName: 'registrationName',
@@ -120,7 +119,7 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
                   //
                   //
 
-                  const SectionLabel("Details"),
+                  const LabelledDivider("Details"),
                   ReactiveDateTimePicker(
                     formControlName: 'dateOfBirth',
                     decoration: const InputDecoration(
@@ -143,16 +142,16 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 48),
+                    padding: const EdgeInsets.only(bottom: 64),
                     child: ReactiveTextField(
-                      valueAccessor: DoubleValueAccessor(),
+                      valueAccessor: DoubleValueAccessor(fractionDigits: 1),
                       formControlName: 'height',
                       decoration: const InputDecoration(
-                          labelText: 'Height',
-                          helperText: 'Height in hands (hh)',
-                          suffixText: 'hh'),
-                      validationMessages: (c) =>
-                          {__validHands: "Invalid hands format; try '15.3'"},
+                          labelText: 'Height (hands)', suffixText: 'hh'),
+                      validationMessages: (c) => {
+                        ValidationMessage.number:
+                            "Invalid hands format; try '15.3'"
+                      },
                     ),
                   ),
                 ]
@@ -203,8 +202,6 @@ class CreateHorseSubmitButton extends StatelessWidget {
                   var horse = Horse(
                     photo: f['photo'],
                     registrationName: f['registrationName'],
-                    damRegistrationName: f['damRegistrationName'],
-                    sireRegistrationName: f['sireRegistrationName'],
                     registrationNumber: f['registrationNumber'],
                     name: f['name'],
                     dateOfBirth: f['dateOfBirth'],
@@ -231,30 +228,6 @@ class CreateHorseSubmitButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12.0),
           child: Text(update ? 'Save Changes' : 'Create Horse'),
         ),
-      ),
-    );
-  }
-}
-
-class SectionLabel extends StatelessWidget {
-  final String text;
-  const SectionLabel(this.text, {Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
-      child: Row(
-        children: <Widget>[
-          Text(
-            text,
-            style: Theme.of(context).textTheme.overline,
-          ),
-          const Expanded(
-              child: Divider(
-            indent: 10,
-          )),
-        ],
       ),
     );
   }

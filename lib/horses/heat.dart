@@ -5,6 +5,7 @@ import 'package:reactive_forms/reactive_forms.dart';
 import 'package:reactive_date_time_picker/reactive_date_time_picker.dart';
 
 import "../state/db.dart";
+import "../utils/utils.dart";
 
 // Widget for adding a new horse
 class HorseHeatPage extends StatefulWidget {
@@ -28,20 +29,18 @@ class _HorseHeatPage extends State<HorseHeatPage> {
     horse = widget.horse;
 
     form = FormGroup({
-      'heat': FormControl<DateTime>(value: horse.nextHeatStart()),
+      'heatCycleStart': FormControl<DateTime>(value: horse.nextHeatStart()),
     });
 
     form.valueChanges.listen((event) async {
-      print("updating");
       if (event == null) {
         return;
       }
-      var raw = event['heat'];
+      var raw = event['heatCycleStart'];
       horse = horse.copyWith(
-          heat:
+          heatCycleStart:
               raw is DateTime ? drift.Value(raw) : const drift.Value.absent());
       try {
-        print("updating $raw");
         await DB.updateHorse(horse);
       } catch (e) {
         setState(() {
@@ -85,12 +84,15 @@ class _HorseHeatPage extends State<HorseHeatPage> {
                     child: Text("End of current cycle:",
                         style: Theme.of(context).textTheme.caption)),
                 Text(
-                    "${DateTime.now().difference(horse.currentHeatEnd()!).abs().inDays} Days from now",
+                    DateTime.now()
+                        .difference(horse.currentHeatEnd()!)
+                        .abs()
+                        .daysRelNow(),
                     style: Theme.of(context).textTheme.bodyText1),
               ],
             ))),
       ];
-    } else if (horse.heat != null) {
+    } else if (horse.heatCycleStart != null) {
       children = [
         (Container(
           margin: const EdgeInsets.only(top: 12, bottom: 16),
@@ -110,7 +112,7 @@ class _HorseHeatPage extends State<HorseHeatPage> {
         )),
       ];
     }
-    if (horse.heat != null) {
+    if (horse.heatCycleStart != null) {
       final nextHeat = DateTime.now().difference(horse.nextHeatStart()!).abs();
       children.add((Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -119,7 +121,7 @@ class _HorseHeatPage extends State<HorseHeatPage> {
               Expanded(
                   child: Text("Next Heat Start:",
                       style: Theme.of(context).textTheme.caption)),
-              Text("${nextHeat.inDays} days from now",
+              Text(nextHeat.daysRelNow(),
                   style: Theme.of(context).textTheme.bodyText1),
             ],
           ))));
@@ -132,7 +134,7 @@ class _HorseHeatPage extends State<HorseHeatPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text('${horse.name} Heat Cycle'),
+          title: Text('${horse.displayName} Heat Cycle'),
         ),
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -142,14 +144,15 @@ class _HorseHeatPage extends State<HorseHeatPage> {
               Padding(
                 padding: const EdgeInsets.only(top: 24),
                 child: ReactiveDateTimePicker(
-                  formControlName: 'heat',
+                  formControlName: 'heatCycleStart',
                   firstDate: DateTime.now().subtract(const Duration(days: 337)),
                   decoration: InputDecoration(
                     labelText: 'Start of heat period',
                     errorText: updateErr,
                     errorMaxLines: 5,
                     helperMaxLines: 99,
-                    helperText: horse.heat == null && updateErr == null
+                    helperText: horse.heatCycleStart == null &&
+                            updateErr == null
                         ? 'No heat cycle set yet! Set this date to any time your mare has been or will be in heat and we will handle everything else. When a pregnancy event occurs for the mare, their cycle will automatically be updated.'
                         : null,
                     suffixIcon: const Icon(Icons.calendar_today),

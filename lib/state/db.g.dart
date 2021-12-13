@@ -338,8 +338,10 @@ class Horse extends DataClass implements Insertable<Horse> {
   final DateTime dateOfBirth;
   final double height;
   final Uint8List? photo;
-  final DateTime? heat;
+  final DateTime? heatCycleStart;
   final String? notes;
+  final int? owner;
+  final int? breeder;
   Horse(
       {required this.registrationName,
       this.registrationNumber,
@@ -350,8 +352,10 @@ class Horse extends DataClass implements Insertable<Horse> {
       required this.dateOfBirth,
       required this.height,
       this.photo,
-      this.heat,
-      this.notes});
+      this.heatCycleStart,
+      this.notes,
+      this.owner,
+      this.breeder});
   factory Horse.fromData(Map<String, dynamic> data, {String? prefix}) {
     final effectivePrefix = prefix ?? '';
     return Horse(
@@ -373,10 +377,14 @@ class Horse extends DataClass implements Insertable<Horse> {
           .mapFromDatabaseResponse(data['${effectivePrefix}height'])!,
       photo: const BlobType()
           .mapFromDatabaseResponse(data['${effectivePrefix}photo']),
-      heat: const DateTimeType()
-          .mapFromDatabaseResponse(data['${effectivePrefix}heat']),
+      heatCycleStart: const DateTimeType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}heat_cycle_start']),
       notes: const StringType()
           .mapFromDatabaseResponse(data['${effectivePrefix}notes']),
+      owner: const IntType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}owner']),
+      breeder: const IntType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}breeder']),
     );
   }
   @override
@@ -402,11 +410,17 @@ class Horse extends DataClass implements Insertable<Horse> {
     if (!nullToAbsent || photo != null) {
       map['photo'] = Variable<Uint8List?>(photo);
     }
-    if (!nullToAbsent || heat != null) {
-      map['heat'] = Variable<DateTime?>(heat);
+    if (!nullToAbsent || heatCycleStart != null) {
+      map['heat_cycle_start'] = Variable<DateTime?>(heatCycleStart);
     }
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String?>(notes);
+    }
+    if (!nullToAbsent || owner != null) {
+      map['owner'] = Variable<int?>(owner);
+    }
+    if (!nullToAbsent || breeder != null) {
+      map['breeder'] = Variable<int?>(breeder);
     }
     return map;
   }
@@ -429,9 +443,16 @@ class Horse extends DataClass implements Insertable<Horse> {
       height: Value(height),
       photo:
           photo == null && nullToAbsent ? const Value.absent() : Value(photo),
-      heat: heat == null && nullToAbsent ? const Value.absent() : Value(heat),
+      heatCycleStart: heatCycleStart == null && nullToAbsent
+          ? const Value.absent()
+          : Value(heatCycleStart),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
+      owner:
+          owner == null && nullToAbsent ? const Value.absent() : Value(owner),
+      breeder: breeder == null && nullToAbsent
+          ? const Value.absent()
+          : Value(breeder),
     );
   }
 
@@ -451,8 +472,10 @@ class Horse extends DataClass implements Insertable<Horse> {
       dateOfBirth: serializer.fromJson<DateTime>(json['dateOfBirth']),
       height: serializer.fromJson<double>(json['height']),
       photo: serializer.fromJson<Uint8List?>(json['photo']),
-      heat: serializer.fromJson<DateTime?>(json['heat']),
+      heatCycleStart: serializer.fromJson<DateTime?>(json['heatCycleStart']),
       notes: serializer.fromJson<String?>(json['notes']),
+      owner: serializer.fromJson<int?>(json['owner']),
+      breeder: serializer.fromJson<int?>(json['breeder']),
     );
   }
   @override
@@ -468,8 +491,10 @@ class Horse extends DataClass implements Insertable<Horse> {
       'dateOfBirth': serializer.toJson<DateTime>(dateOfBirth),
       'height': serializer.toJson<double>(height),
       'photo': serializer.toJson<Uint8List?>(photo),
-      'heat': serializer.toJson<DateTime?>(heat),
+      'heatCycleStart': serializer.toJson<DateTime?>(heatCycleStart),
       'notes': serializer.toJson<String?>(notes),
+      'owner': serializer.toJson<int?>(owner),
+      'breeder': serializer.toJson<int?>(breeder),
     };
   }
 
@@ -483,8 +508,10 @@ class Horse extends DataClass implements Insertable<Horse> {
           DateTime? dateOfBirth,
           double? height,
           Value<Uint8List?> photo = const Value.absent(),
-          Value<DateTime?> heat = const Value.absent(),
-          Value<String?> notes = const Value.absent()}) =>
+          Value<DateTime?> heatCycleStart = const Value.absent(),
+          Value<String?> notes = const Value.absent(),
+          Value<int?> owner = const Value.absent(),
+          Value<int?> breeder = const Value.absent()}) =>
       Horse(
         registrationName: registrationName ?? this.registrationName,
         registrationNumber: registrationNumber.present
@@ -501,8 +528,11 @@ class Horse extends DataClass implements Insertable<Horse> {
         dateOfBirth: dateOfBirth ?? this.dateOfBirth,
         height: height ?? this.height,
         photo: photo.present ? photo.value : this.photo,
-        heat: heat.present ? heat.value : this.heat,
+        heatCycleStart:
+            heatCycleStart.present ? heatCycleStart.value : this.heatCycleStart,
         notes: notes.present ? notes.value : this.notes,
+        owner: owner.present ? owner.value : this.owner,
+        breeder: breeder.present ? breeder.value : this.breeder,
       );
   @override
   String toString() {
@@ -516,8 +546,10 @@ class Horse extends DataClass implements Insertable<Horse> {
           ..write('dateOfBirth: $dateOfBirth, ')
           ..write('height: $height, ')
           ..write('photo: $photo, ')
-          ..write('heat: $heat, ')
-          ..write('notes: $notes')
+          ..write('heatCycleStart: $heatCycleStart, ')
+          ..write('notes: $notes, ')
+          ..write('owner: $owner, ')
+          ..write('breeder: $breeder')
           ..write(')'))
         .toString();
   }
@@ -533,8 +565,10 @@ class Horse extends DataClass implements Insertable<Horse> {
       dateOfBirth,
       height,
       photo,
-      heat,
-      notes);
+      heatCycleStart,
+      notes,
+      owner,
+      breeder);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -548,8 +582,10 @@ class Horse extends DataClass implements Insertable<Horse> {
           other.dateOfBirth == this.dateOfBirth &&
           other.height == this.height &&
           other.photo == this.photo &&
-          other.heat == this.heat &&
-          other.notes == this.notes);
+          other.heatCycleStart == this.heatCycleStart &&
+          other.notes == this.notes &&
+          other.owner == this.owner &&
+          other.breeder == this.breeder);
 }
 
 class HorsesCompanion extends UpdateCompanion<Horse> {
@@ -562,8 +598,10 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
   final Value<DateTime> dateOfBirth;
   final Value<double> height;
   final Value<Uint8List?> photo;
-  final Value<DateTime?> heat;
+  final Value<DateTime?> heatCycleStart;
   final Value<String?> notes;
+  final Value<int?> owner;
+  final Value<int?> breeder;
   const HorsesCompanion({
     this.registrationName = const Value.absent(),
     this.registrationNumber = const Value.absent(),
@@ -574,8 +612,10 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
     this.dateOfBirth = const Value.absent(),
     this.height = const Value.absent(),
     this.photo = const Value.absent(),
-    this.heat = const Value.absent(),
+    this.heatCycleStart = const Value.absent(),
     this.notes = const Value.absent(),
+    this.owner = const Value.absent(),
+    this.breeder = const Value.absent(),
   });
   HorsesCompanion.insert({
     required String registrationName,
@@ -587,8 +627,10 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
     required DateTime dateOfBirth,
     required double height,
     this.photo = const Value.absent(),
-    this.heat = const Value.absent(),
+    this.heatCycleStart = const Value.absent(),
     this.notes = const Value.absent(),
+    this.owner = const Value.absent(),
+    this.breeder = const Value.absent(),
   })  : registrationName = Value(registrationName),
         name = Value(name),
         sex = Value(sex),
@@ -604,8 +646,10 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
     Expression<DateTime>? dateOfBirth,
     Expression<double>? height,
     Expression<Uint8List?>? photo,
-    Expression<DateTime?>? heat,
+    Expression<DateTime?>? heatCycleStart,
     Expression<String?>? notes,
+    Expression<int?>? owner,
+    Expression<int?>? breeder,
   }) {
     return RawValuesInsertable({
       if (registrationName != null) 'registration_name': registrationName,
@@ -619,8 +663,10 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
       if (dateOfBirth != null) 'date_of_birth': dateOfBirth,
       if (height != null) 'height': height,
       if (photo != null) 'photo': photo,
-      if (heat != null) 'heat': heat,
+      if (heatCycleStart != null) 'heat_cycle_start': heatCycleStart,
       if (notes != null) 'notes': notes,
+      if (owner != null) 'owner': owner,
+      if (breeder != null) 'breeder': breeder,
     });
   }
 
@@ -634,8 +680,10 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
       Value<DateTime>? dateOfBirth,
       Value<double>? height,
       Value<Uint8List?>? photo,
-      Value<DateTime?>? heat,
-      Value<String?>? notes}) {
+      Value<DateTime?>? heatCycleStart,
+      Value<String?>? notes,
+      Value<int?>? owner,
+      Value<int?>? breeder}) {
     return HorsesCompanion(
       registrationName: registrationName ?? this.registrationName,
       registrationNumber: registrationNumber ?? this.registrationNumber,
@@ -646,8 +694,10 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       height: height ?? this.height,
       photo: photo ?? this.photo,
-      heat: heat ?? this.heat,
+      heatCycleStart: heatCycleStart ?? this.heatCycleStart,
       notes: notes ?? this.notes,
+      owner: owner ?? this.owner,
+      breeder: breeder ?? this.breeder,
     );
   }
 
@@ -684,11 +734,17 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
     if (photo.present) {
       map['photo'] = Variable<Uint8List?>(photo.value);
     }
-    if (heat.present) {
-      map['heat'] = Variable<DateTime?>(heat.value);
+    if (heatCycleStart.present) {
+      map['heat_cycle_start'] = Variable<DateTime?>(heatCycleStart.value);
     }
     if (notes.present) {
       map['notes'] = Variable<String?>(notes.value);
+    }
+    if (owner.present) {
+      map['owner'] = Variable<int?>(owner.value);
+    }
+    if (breeder.present) {
+      map['breeder'] = Variable<int?>(breeder.value);
     }
     return map;
   }
@@ -705,8 +761,10 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
           ..write('dateOfBirth: $dateOfBirth, ')
           ..write('height: $height, ')
           ..write('photo: $photo, ')
-          ..write('heat: $heat, ')
-          ..write('notes: $notes')
+          ..write('heatCycleStart: $heatCycleStart, ')
+          ..write('notes: $notes, ')
+          ..write('owner: $owner, ')
+          ..write('breeder: $breeder')
           ..write(')'))
         .toString();
   }
@@ -758,14 +816,27 @@ class $HorsesTable extends Horses with TableInfo<$HorsesTable, Horse> {
   late final GeneratedColumn<Uint8List?> photo = GeneratedColumn<Uint8List?>(
       'photo', aliasedName, true,
       typeName: 'BLOB', requiredDuringInsert: false);
-  final VerificationMeta _heatMeta = const VerificationMeta('heat');
-  late final GeneratedColumn<DateTime?> heat = GeneratedColumn<DateTime?>(
-      'heat', aliasedName, true,
-      typeName: 'INTEGER', requiredDuringInsert: false);
+  final VerificationMeta _heatCycleStartMeta =
+      const VerificationMeta('heatCycleStart');
+  late final GeneratedColumn<DateTime?> heatCycleStart =
+      GeneratedColumn<DateTime?>('heat_cycle_start', aliasedName, true,
+          typeName: 'INTEGER', requiredDuringInsert: false);
   final VerificationMeta _notesMeta = const VerificationMeta('notes');
   late final GeneratedColumn<String?> notes = GeneratedColumn<String?>(
       'notes', aliasedName, true,
       typeName: 'TEXT', requiredDuringInsert: false);
+  final VerificationMeta _ownerMeta = const VerificationMeta('owner');
+  late final GeneratedColumn<int?> owner = GeneratedColumn<int?>(
+      'owner', aliasedName, true,
+      typeName: 'INTEGER',
+      requiredDuringInsert: false,
+      $customConstraints: 'NULLABLE REFERENCES owners(id)');
+  final VerificationMeta _breederMeta = const VerificationMeta('breeder');
+  late final GeneratedColumn<int?> breeder = GeneratedColumn<int?>(
+      'breeder', aliasedName, true,
+      typeName: 'INTEGER',
+      requiredDuringInsert: false,
+      $customConstraints: 'NULLABLE REFERENCES owners(id)');
   @override
   List<GeneratedColumn> get $columns => [
         registrationName,
@@ -777,8 +848,10 @@ class $HorsesTable extends Horses with TableInfo<$HorsesTable, Horse> {
         dateOfBirth,
         height,
         photo,
-        heat,
-        notes
+        heatCycleStart,
+        notes,
+        owner,
+        breeder
       ];
   @override
   String get aliasedName => _alias ?? 'horses';
@@ -840,13 +913,23 @@ class $HorsesTable extends Horses with TableInfo<$HorsesTable, Horse> {
       context.handle(
           _photoMeta, photo.isAcceptableOrUnknown(data['photo']!, _photoMeta));
     }
-    if (data.containsKey('heat')) {
+    if (data.containsKey('heat_cycle_start')) {
       context.handle(
-          _heatMeta, heat.isAcceptableOrUnknown(data['heat']!, _heatMeta));
+          _heatCycleStartMeta,
+          heatCycleStart.isAcceptableOrUnknown(
+              data['heat_cycle_start']!, _heatCycleStartMeta));
     }
     if (data.containsKey('notes')) {
       context.handle(
           _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
+    }
+    if (data.containsKey('owner')) {
+      context.handle(
+          _ownerMeta, owner.isAcceptableOrUnknown(data['owner']!, _ownerMeta));
+    }
+    if (data.containsKey('breeder')) {
+      context.handle(_breederMeta,
+          breeder.isAcceptableOrUnknown(data['breeder']!, _breederMeta));
     }
     return context;
   }

@@ -45,6 +45,18 @@ extension DateTimeFormatting on DateTime {
   }
 }
 
+extension DurationFormatting on Duration {
+  String daysRelNow() {
+    var d = inDays;
+    if (d == 0) return 'Today';
+    if (d == 1) return 'Tomorrow';
+    if (d == -1) return 'Yesterday';
+    if (d > 0) return '$d days from now';
+    if (d < 0) return '$d days ago';
+    return 'unknown';
+  }
+}
+
 // Helper function to return the app drawer
 Drawer appDrawer(BuildContext context, String root) {
   return Drawer(
@@ -56,7 +68,7 @@ Drawer appDrawer(BuildContext context, String root) {
               color: Theme.of(context).colorScheme.surface,
             ),
             child: Container(
-              padding: EdgeInsets.all(10),
+              padding: const EdgeInsets.all(10),
               // child: Text(
               //   'Menu',
               //   style: Theme.of(context).textTheme.headline6,
@@ -118,6 +130,15 @@ void showError(BuildContext context, String message) {
       backgroundColor: Theme.of(context).errorColor,
     ),
   );
+}
+
+Future<T> handle<T>(BuildContext context, Future<T> future) async {
+  try {
+    return await future;
+  } catch (e) {
+    showError(context, e.toString());
+    rethrow;
+  }
 }
 
 String formatStr(String s) {

@@ -25,7 +25,7 @@ class TopEventListItem extends StatelessWidget {
       ),
       subtitle: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [Text(event.horse.name), Text(event.date.date())]),
+          children: [Text(event.horse.displayName), Text(event.date.date())]),
       isThreeLine: true,
       onTap: () => onTap(event),
     );
@@ -49,7 +49,7 @@ class NestedEventListItem extends StatelessWidget {
       contentPadding: const EdgeInsets.only(left: 20, right: 16),
       title: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text(
-          formatStr(event.horse.name),
+          formatStr(event.horse.displayName),
           style: const TextStyle(fontWeight: FontWeight.w500),
         ),
         Text(event.date.date()),

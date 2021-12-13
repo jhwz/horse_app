@@ -29,8 +29,13 @@ class Horses extends Table {
   DateTimeColumn get dateOfBirth => dateTime()();
   RealColumn get height => real()();
   BlobColumn get photo => blob().nullable()();
-  DateTimeColumn get heat => dateTime().nullable()();
+  DateTimeColumn get heatCycleStart => dateTime().nullable()();
   TextColumn get notes => text().nullable()();
+
+  IntColumn get owner =>
+      integer().nullable().customConstraint('NULLABLE REFERENCES owners(id)')();
+  IntColumn get breeder =>
+      integer().nullable().customConstraint('NULLABLE REFERENCES owners(id)')();
 
   @override
   Set<Column> get primaryKey => {registrationName};
@@ -44,6 +49,12 @@ class Events extends Table {
   DateTimeColumn get date => dateTime().clientDefault(() => DateTime.now())();
   TextColumn get notes => text().nullable()();
   TextColumn get extra => text().map(const JSONConverter()).nullable()();
+}
+
+class Owner extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get address => text().nullable()();
 }
 
 // composed rows on joins
@@ -70,6 +81,15 @@ class JSONConverter extends TypeConverter<Map<String, dynamic>, String> {
 }
 
 late AppDb DB;
+
+LazyDatabase _openConnection() {
+  return LazyDatabase(() async {
+    final dbFolder = await getApplicationDocumentsDirectory();
+    final file = File(p.join(dbFolder.path, 'app.db'));
+    // file.delete();
+    return NativeDatabase(file);
+  });
+}
 
 @DriftDatabase(tables: [Events, Horses])
 class AppDb extends _$AppDb {
@@ -101,7 +121,20 @@ class AppDb extends _$AppDb {
   }
 
   Future<List<Horse>> listHorses(
-      {String filter = '', int limit = 10, int offset = 0}) async {
+      {String filter = '',
+      int limit = 10,
+      int offset = 0,
+      DateTime? before}) async {
+    if (before != null) {
+      return (select(horses)
+            ..where((tbl) =>
+                (tbl.registrationName.contains(filter) |
+                    tbl.name.contains(filter)) &
+                tbl.dateOfBirth.isSmallerThanValue(before))
+            ..limit(limit, offset: offset))
+          .get();
+    }
+
     return (select(horses)
           ..where((tbl) =>
               tbl.registrationName.contains(filter) | tbl.name.contains(filter))
@@ -113,6 +146,14 @@ class AppDb extends _$AppDb {
     return (select(horses)
           ..where((tbl) => tbl.registrationName.equals(registrationName)))
         .getSingle();
+  }
+
+  Future<List<Horse>> getHorseOffspring(String registrationName) async {
+    return (select(horses)
+          ..where((tbl) =>
+              tbl.sireRegistrationName.equals(registrationName) |
+              tbl.damRegistrationName.equals(registrationName)))
+        .get();
   }
 
   // *******************
@@ -152,12 +193,4 @@ class AppDb extends _$AppDb {
   Future<void> createEvent(Insertable<Event> e) async {
     await into(events).insert(e);
   }
-}
-
-LazyDatabase _openConnection() {
-  return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'app.db'));
-    return NativeDatabase(file);
-  });
 }

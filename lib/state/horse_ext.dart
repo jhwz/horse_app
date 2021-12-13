@@ -3,16 +3,19 @@ part of 'db.dart';
 extension HorseHelpers on Horse {
   static const Duration cyclePeriod = Duration(days: 21);
   static const Duration heatDuration = Duration(days: 6);
+  static const Duration postFoalingDuration = Duration(days: 7);
+
+  String get displayName => name == "" ? registrationName : name;
 
   DateTime? nextHeatStart() {
-    if (heat == null) {
+    if (heatCycleStart == null) {
       return null;
     }
 
     var now = DateTime.now();
 
     // horrible algorithm but it will work
-    var nextHeat = heat!;
+    var nextHeat = heatCycleStart!;
     while (nextHeat.isBefore(now)) {
       nextHeat = nextHeat.add(cyclePeriod);
     }
@@ -20,14 +23,14 @@ extension HorseHelpers on Horse {
   }
 
   DateTime? currentHeatEnd() {
-    if (heat == null) {
+    if (heatCycleStart == null) {
       return null;
     }
 
     var now = DateTime.now();
 
-    var nextHeat = heat!;
-    var prevHeat = heat!;
+    var nextHeat = heatCycleStart!;
+    var prevHeat = heatCycleStart!.subtract(cyclePeriod);
     while (nextHeat.isBefore(now)) {
       prevHeat = nextHeat;
       nextHeat = nextHeat.add(cyclePeriod);
@@ -44,7 +47,7 @@ extension HorseHelpers on Horse {
 
   Horse updateHeatFromFoalingDate(DateTime foalingDate) {
     return copyWith(
-      heat: Value(foalingDate.add(const Duration(days: 6))),
+      heatCycleStart: Value(foalingDate.add(postFoalingDuration)),
     );
   }
 }
