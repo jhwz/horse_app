@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:horse_app/notifications.dart';
 import 'package:horse_app/preferences.dart';
 
 import 'events/list.dart';
@@ -11,7 +12,11 @@ import 'theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await initSharedPreferences();
+  // Initialize our bits and pieces
+  await Future.wait([
+    initSharedPreferences(),
+    // initNotificatons(),
+  ]);
 
   DB = AppDb();
   runApp(const ProviderScope(child: App()));
@@ -19,9 +24,6 @@ void main() async {
 
 class App extends ConsumerWidget {
   const App({Key? key}) : super(key: key);
-
-  @override
-  void initState() {}
 
   // This widget is the root of your application.
   @override

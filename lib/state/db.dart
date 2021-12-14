@@ -102,8 +102,6 @@ class AppDb extends _$AppDb {
   // Horse queries
   // *******************
   Future<void> createHorse(Insertable<Horse> h) async {
-    print(h);
-
     await into(horses).insert(h);
   }
 

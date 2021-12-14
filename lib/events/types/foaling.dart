@@ -32,13 +32,12 @@ class FoalingEvent extends ET {
     return {
       foalColour: FormControl<String>(
         value: defaultVals?[foalColour] ?? '',
-        validators: [Validators.required],
       ),
       sireRegistrationName: FormControl<String>(
           value: defaultVals?[sireRegistrationName] ?? '',
           validators: [Validators.required]),
       foalSex: FormControl<int>(
-          value: defaultVals?[foalSex] ?? '',
+          value: defaultVals?[foalSex] ?? Sex.female.index,
           validators: [Validators.required]),
     };
   }
@@ -57,6 +56,9 @@ class FoalingEvent extends ET {
         decoration: const InputDecoration(
           labelText: 'Sire Registration Name',
         ),
+        validationMessages: (c) => {
+          ValidationMessage.required: "Require sire registration name",
+        },
       ),
       ReactiveDropdownField(
         formControlName: foalSex,
@@ -73,6 +75,9 @@ class FoalingEvent extends ET {
         decoration: const InputDecoration(
           labelText: 'Sex',
         ),
+        validationMessages: (c) => {
+          ValidationMessage.required: "Require foal sex",
+        },
       ),
     ];
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:horse_app/events/create.dart';
 import 'package:horse_app/events/list_item.dart';
 import 'package:horse_app/events/single.dart';
+import 'package:horse_app/notifications.dart';
 import 'package:horse_app/utils/app_bar_search.dart';
 
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
@@ -50,7 +51,11 @@ class _EventsPageState extends State<EventsPage> {
 
       // fetch the horses
       var events = await DB.listEvents(
-          filter: filter, offset: pageKey, limit: _pageSize, now: _focusedDay);
+        filter: filter,
+        offset: pageKey,
+        limit: _pageSize,
+        now: _focusedDay.add(const Duration(hours: 23, minutes: 59)),
+      );
 
       if (events.isEmpty) {
         _pagingController.appendLastPage([]);
@@ -88,10 +93,11 @@ class _EventsPageState extends State<EventsPage> {
         while (!isLastPage) {
           pageKey += _pageSize;
           var eventsNext = await DB.listEvents(
-              filter: filter,
-              offset: pageKey,
-              limit: _pageSize,
-              now: _focusedDay);
+            filter: filter,
+            offset: pageKey,
+            limit: _pageSize,
+            now: _focusedDay.add(const Duration(hours: 23, minutes: 59)),
+          );
           isLastPage = eventsNext.length < _pageSize;
           for (int i = 0; i < eventsNext.length; i++) {
             if (curr.last.type == eventsNext[i].type &&
@@ -135,6 +141,7 @@ class _EventsPageState extends State<EventsPage> {
         actions: [
           IconButton(
             onPressed: () {
+              showNotification();
               setState(() {
                 if (searchIconOrCancel.icon == Icons.search) {
                   searchIconOrCancel = const Icon(Icons.cancel);
