@@ -326,29 +326,6 @@ class ImagePickerWidget extends StatelessWidget {
     }
 
     onConfirm();
-
-    // showDialog<void>(
-    //   context: context,
-    //   builder: (BuildContext context) {
-    //     return AlertDialog(
-    //       title: Text("Delete image"),
-    //       content: Text("This action could not be undone"),
-    //       actions: [
-    //         TextButton(
-    //           child: Text("CLOSE"),
-    //           onPressed: () => Navigator.of(context).pop(),
-    //         ),
-    //         TextButton(
-    //           child: Text("CONFIRM"),
-    //           onPressed: () {
-    //             onConfirm();
-    //             Navigator.of(context).pop();
-    //           },
-    //         ),
-    //       ],
-    //     );
-    //   },
-    // );
   }
 
   Widget _buildImage(BuildContext context) {

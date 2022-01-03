@@ -1,6 +1,13 @@
+import 'dart:collection';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:horse_app/events/add_event_dialog.dart';
+import 'package:horse_app/events/types/noop.dart';
 import 'package:horse_app/events/types/types.dart';
+import 'package:horse_app/notifications.dart';
+import 'package:horse_app/utils/icon_text.dart';
 import 'package:reactive_date_time_picker/reactive_date_time_picker.dart';
 
 import 'package:reactive_forms/reactive_forms.dart';
@@ -18,7 +25,7 @@ class NewEventPage extends StatefulWidget {
 class _NewEventPageState extends State<NewEventPage> {
   static const String _title = 'New Event';
   int _index = 0;
-  late ET event;
+  ET event = NoopEvent("noEvent");
   final List<Horse> _horses = [];
   List<Horse> _allHorses = [];
   bool _selectAllHorses = false;
@@ -28,32 +35,49 @@ class _NewEventPageState extends State<NewEventPage> {
 
   Future<void> _createEvent() async {
     if (_horses.isNotEmpty) {
-      // create a unique event for each horse
-      List<EventsCompanion> events = _horses.map<EventsCompanion>((h) {
-        var map = form.value;
-        var e = EventsCompanion(
-          date: Value(map["date"] as DateTime),
-          registrationName: Value(h.registrationName),
-          type: Value(event.type),
-          notes: Value(map["notes"] is String ? map["notes"] as String : null),
-        );
+      Map<String, dynamic> map = Map.from(form.value);
+      final eventTime = map["date"] as DateTime;
+      final notes = map["notes"] is String ? map["notes"] as String : null;
+      map.remove("date");
+      map.remove("notes");
 
-        return e;
-      }).toList();
+      // create a unique event for each horse
+      List<EventsCompanion> events = _horses
+          .map((h) => EventsCompanion(
+                date: Value(eventTime),
+                registrationName: Value(h.registrationName),
+                type: Value(event.type),
+                notes: Value(notes),
+                extra: Value(map),
+              ))
+          .toList();
 
       // add all the events to the database
-      await Future.wait(events.map((e) => DB.createEvent(e)));
+      await Future.wait(events.map((e) => db.createEvent(e)));
 
       // if this is a special event, create some actions from it.
-      if (event.type == ET.foaling.type) {
-        for (var h in _horses) {
-          try {
-            event.onCreate(h);
-          } catch (e) {
-            showError(context, "Something went wrong: $e");
-          }
+      for (var h in _horses) {
+        try {
+          event.onCreate(h);
+        } catch (e) {
+          showError(context, "Something went wrong: $e");
         }
       }
+
+      // asynchronously schedule notifications for the event
+      () async {
+        final storedEvents = await db.listEvents(
+            now: eventTime.add(const Duration(minutes: 1)),
+            limit: events.length);
+
+        if (storedEvents.length == 1) {
+          scheduleNotificationForEvent(
+              storedEvents[0], storedEvents[0].horse.displayName);
+        } else if (storedEvents.isNotEmpty) {
+          scheduleNotificationForEventList(
+              storedEvents[0], storedEvents.length);
+        }
+      }();
     }
     Navigator.pop(context);
   }
@@ -62,7 +86,7 @@ class _NewEventPageState extends State<NewEventPage> {
     if (_allHorses.isNotEmpty) {
       return true;
     }
-    var horses = await DB.listHorses();
+    var horses = await db.listHorses();
     setState(() {
       _allHorses = horses;
     });
@@ -78,6 +102,8 @@ class _NewEventPageState extends State<NewEventPage> {
     List<Widget> children = [
       ReactiveDateTimePicker(
         formControlName: 'date',
+        type: ReactiveDatePickerFieldType.dateTime,
+        timePickerEntryMode: TimePickerEntryMode.input,
         decoration: const InputDecoration(
           labelText: 'Time of event (defaults to now)',
         ),
@@ -140,10 +166,7 @@ class _NewEventPageState extends State<NewEventPage> {
         currentStep: _index,
         type: StepperType.horizontal,
         elevation: 7,
-        controlsBuilder: (context,
-            {VoidCallback? onStepContinue, VoidCallback? onStepCancel}) {
-          return const SizedBox.shrink();
-        },
+        controlsBuilder: (context, details) => const SizedBox.shrink(),
         onStepTapped: (int index) {
           if (index < _index) {
             setState(() {
@@ -158,7 +181,7 @@ class _NewEventPageState extends State<NewEventPage> {
           Step(
             isActive: _index == 0,
             state: _index == 0 ? StepState.editing : StepState.complete,
-            title: Text(_index == 0 ? 'Event Type' : formatStr(event.type)),
+            title: Text(_index == 0 ? 'Event Type' : event.formattedType),
             content: Step1(
               onTap: (e) {
                 setState(() {
@@ -303,7 +326,15 @@ class CreateEventSubmitButton extends StatelessWidget {
   }
 }
 
-class Step1 extends StatelessWidget {
+final allEvents = Provider<List<ET>>((ref) {
+  final noops = ref.watch(customEventsProvider);
+  List<ET> events = List.from(ET.types)
+    ..addAll(noops.map((name) => NoopEvent(name)))
+    ..sort((a, b) => a.type.compareTo(b.type));
+  return events;
+});
+
+class Step1 extends ConsumerWidget {
   final void Function(ET) onTap;
 
   const Step1({
@@ -312,31 +343,51 @@ class Step1 extends StatelessWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Padding(
-          child: Text('Select the event type'),
-          padding: EdgeInsets.only(bottom: 8.0)),
-      ...ET.types
-          .map(
-            (e) => Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: Theme.of(context).dividerColor,
-                    width: 1,
-                  ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Select the event type'),
+              ElevatedButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const AddEventDialog(),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                ),
+                child: const TextIcon("new", Icons.add),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.only(bottom: 8.0),
+        ),
+        for (final e in ref.watch(allEvents))
+          Container(
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).dividerColor,
+                  width: 1,
                 ),
               ),
-              child: ListTile(
-                visualDensity: VisualDensity.comfortable,
-                title: Text(formatStr(e.type)),
-                onTap: () => onTap(e),
-              ),
             ),
-          )
-          .toList()
-    ]);
+            child: ListTile(
+              visualDensity: VisualDensity.comfortable,
+              title: Text(e.formattedType),
+              onTap: () => onTap(e),
+            ),
+          ),
+      ],
+    );
   }
 }
 

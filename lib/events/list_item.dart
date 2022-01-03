@@ -20,7 +20,7 @@ class TopEventListItem extends StatelessWidget {
     return ListTile(
       minVerticalPadding: 0,
       title: Text(
-        formatStr(event.type),
+        event.formattedType,
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
       subtitle: Row(
@@ -79,7 +79,7 @@ class _EventListGroupState extends State<EventListGroup> {
     return ListTile(
       onTap: () => setState(() => _expanded = !_expanded),
       title: Text(
-        formatStr(widget.events[0].type),
+        widget.events[0].formattedType,
         style: const TextStyle(fontWeight: FontWeight.w700),
       ),
       subtitle:

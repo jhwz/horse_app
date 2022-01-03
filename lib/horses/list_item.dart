@@ -23,7 +23,13 @@ class HorseListItem extends StatelessWidget {
         contentPadding:
             const EdgeInsets.only(left: 8, right: 16, top: 0, bottom: 0),
         minVerticalPadding: 0,
-        leading: horse.photo != null ? Image.memory(horse.photo!) : null,
+        leading: SizedBox(
+          child: horse.photo != null
+              ? Image.memory(horse.photo!)
+              : const SizedBox.shrink(),
+          width: 80,
+          height: 64,
+        ),
         title: Text(horse.displayName),
         subtitle: Text(
             '${horse.registrationName} - ${DateTime.now().difference(horse.dateOfBirth).inDays ~/ 365} years old'),

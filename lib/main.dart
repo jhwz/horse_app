@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horse_app/notifications.dart';
 import 'package:horse_app/preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'events/list.dart';
 import 'horses/list.dart';
@@ -13,13 +14,21 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize our bits and pieces
-  await Future.wait([
-    initSharedPreferences(),
-    // initNotificatons(),
+  final awaited = await Future.wait([
+    SharedPreferences.getInstance(),
+    initNotificatons(),
   ]);
+  final sharedPrefs = awaited[0] as SharedPreferences;
 
-  DB = AppDb();
-  runApp(const ProviderScope(child: App()));
+  db = AppDb();
+  runApp(
+    ProviderScope(
+      child: const App(),
+      overrides: [
+        preferences.overrideWithValue(sharedPrefs),
+      ],
+    ),
+  );
 }
 
 class App extends ConsumerWidget {

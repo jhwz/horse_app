@@ -21,3 +21,25 @@ class IconText extends StatelessWidget {
     );
   }
 }
+
+class TextIcon extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const TextIcon(
+    this.text,
+    this.icon, {
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(text),
+        const SizedBox(width: 8),
+        Icon(icon),
+      ],
+    );
+  }
+}

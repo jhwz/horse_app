@@ -3,6 +3,7 @@ import 'package:horse_app/horses/create.dart';
 import 'package:horse_app/horses/list_item.dart';
 import 'package:horse_app/horses/single.dart';
 import 'package:horse_app/utils/app_bar_search.dart';
+import 'package:horse_app/utils/empty_list_widget.dart';
 
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
@@ -49,19 +50,23 @@ class _HorsesPageState extends State<HorsesPage> {
       return HorseProfilePage(horse: horse);
     }));
     try {
-      horse = await DB.getHorse(horse.registrationName);
+      horse = await db.getHorse(horse.registrationName);
       setState(() {
         _pagingController.itemList![idx] = horse;
       });
     } catch (e) {
-      showError(context, "Something went wrong when reloading horse...");
+      if (e is StateError && e.message == 'No element') {
+        _onDelete(horse.registrationName);
+      } else {
+        showError(context, "Something went wrong when reloading horse...");
+      }
     }
   }
 
   Future<void> _fetchPage(int pageKey) async {
     try {
       // fetch the horses
-      var horses = await DB.listHorses(
+      var horses = await db.listHorses(
           filter: filter, offset: pageKey, limit: _pageSize);
 
       final isLastPage = horses.length < _pageSize;
@@ -76,23 +81,26 @@ class _HorsesPageState extends State<HorsesPage> {
     }
   }
 
+  _onAppBarSearchChanged(String value) {
+    setState(() {
+      filter = value;
+      _pagingController.refresh();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: searchBarOrTitle,
+        title: AppBarAnimator(child: searchBarOrTitle),
         actions: [
           IconButton(
             onPressed: () {
               setState(() {
                 if (searchIconOrCancel.icon == Icons.search) {
                   searchIconOrCancel = const Icon(Icons.cancel);
-                  searchBarOrTitle = AppBarSearch(
-                    onChanged: (v) {
-                      filter = v;
-                      _pagingController.refresh();
-                    },
-                  );
+                  searchBarOrTitle =
+                      AppBarSearch(onChanged: _onAppBarSearchChanged);
                 } else {
                   searchIconOrCancel = const Icon(Icons.search);
                   searchBarOrTitle = Text(title);
@@ -116,32 +124,11 @@ class _HorsesPageState extends State<HorsesPage> {
           builderDelegate: PagedChildBuilderDelegate<Horse>(
             itemBuilder: (context, horse, index) => HorseListItem(
               horse: horse,
-              onTap: (h) {
-                _onTap(context, index, h);
-              },
-              trailing: PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert),
-                onSelected: (String value) async {
-                  if (value == 'Delete') {
-                    try {
-                      await DB.deleteHorse(horse.registrationName);
-                      _onDelete(horse.registrationName);
-                      showSuccess(context, 'Deleted');
-                    } catch (e) {
-                      showError(context, 'Deleting failed: ${e.toString()}');
-                    }
-                  }
-                },
-                itemBuilder: (BuildContext context) {
-                  return {'Delete'}.map((String choice) {
-                    return PopupMenuItem<String>(
-                      value: choice,
-                      child: Text(choice),
-                    );
-                  }).toList();
-                },
-              ),
+              onTap: (h) => _onTap(context, index, h),
             ),
+            noItemsFoundIndicatorBuilder: (context) => const EmptyListTemplate(
+                title: "No Horses Found!",
+                child: Text("Add new horses with the button below")),
           ),
         ),
       ),

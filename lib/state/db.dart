@@ -1,9 +1,9 @@
-import 'dart:collection';
 import 'dart:io';
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:horse_app/utils/utils.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
@@ -27,7 +27,7 @@ class Horses extends Table {
   TextColumn get name => text()();
   IntColumn get sex => intEnum<Sex>()();
   DateTimeColumn get dateOfBirth => dateTime()();
-  RealColumn get height => real()();
+  RealColumn get height => real().nullable()();
   BlobColumn get photo => blob().nullable()();
   DateTimeColumn get heatCycleStart => dateTime().nullable()();
   TextColumn get notes => text().nullable()();
@@ -67,6 +67,7 @@ class EventHorse extends Event {
           notes: event.notes,
           id: event.id,
           registrationName: event.registrationName,
+          extra: event.extra,
         );
 }
 
@@ -74,13 +75,13 @@ class JSONConverter extends TypeConverter<Map<String, dynamic>, String> {
   const JSONConverter();
   @override
   Map<String, dynamic>? mapToDart(String? fromDb) =>
-      fromDb == null ? null : json.decode(fromDb);
+      fromDb != null ? json.decode(fromDb) : null;
 
   @override
   String mapToSql(Map<String, dynamic>? value) => json.encode(value);
 }
 
-late AppDb DB;
+late AppDb db;
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
@@ -111,31 +112,32 @@ class AppDb extends _$AppDb {
 
   Future<void> deleteHorse(String registrationName) async {
     return transaction(() async {
-      delete(horses)
-          .where((tbl) => tbl.registrationName.equals(registrationName));
-      delete(events)
-          .where((tbl) => tbl.registrationName.equals(registrationName));
+      await (delete(horses)
+            ..where((tbl) => tbl.registrationName.equals(registrationName)))
+          .go();
+
+      await (delete(events)
+            ..where((tbl) => tbl.registrationName.equals(registrationName)))
+          .go();
     });
   }
 
-  Future<List<Horse>> listHorses(
-      {String filter = '',
-      int limit = 10,
-      int offset = 0,
-      DateTime? before}) async {
-    if (before != null) {
-      return (select(horses)
-            ..where((tbl) =>
-                (tbl.registrationName.contains(filter) |
-                    tbl.name.contains(filter)) &
-                tbl.dateOfBirth.isSmallerThanValue(before))
-            ..limit(limit, offset: offset))
-          .get();
-    }
-
+  Future<List<Horse>> listHorses({
+    String filter = '',
+    int limit = 10,
+    int offset = 0,
+    DateTime? before,
+    Sex? sex,
+  }) async {
     return (select(horses)
-          ..where((tbl) =>
-              tbl.registrationName.contains(filter) | tbl.name.contains(filter))
+          ..where((tbl) {
+            final whereList = <Expression<bool?>>[
+              tbl.registrationName.contains(filter) | tbl.name.contains(filter),
+              if (before != null) tbl.dateOfBirth.isSmallerThanValue(before),
+              if (sex != null) tbl.sex.equalsValue(sex),
+            ];
+            return whereList.reduce((clause, condition) => clause & condition);
+          })
           ..limit(limit, offset: offset))
         .get();
   }

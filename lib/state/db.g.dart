@@ -336,7 +336,7 @@ class Horse extends DataClass implements Insertable<Horse> {
   final String name;
   final Sex sex;
   final DateTime dateOfBirth;
-  final double height;
+  final double? height;
   final Uint8List? photo;
   final DateTime? heatCycleStart;
   final String? notes;
@@ -350,7 +350,7 @@ class Horse extends DataClass implements Insertable<Horse> {
       required this.name,
       required this.sex,
       required this.dateOfBirth,
-      required this.height,
+      this.height,
       this.photo,
       this.heatCycleStart,
       this.notes,
@@ -374,7 +374,7 @@ class Horse extends DataClass implements Insertable<Horse> {
       dateOfBirth: const DateTimeType()
           .mapFromDatabaseResponse(data['${effectivePrefix}date_of_birth'])!,
       height: const RealType()
-          .mapFromDatabaseResponse(data['${effectivePrefix}height'])!,
+          .mapFromDatabaseResponse(data['${effectivePrefix}height']),
       photo: const BlobType()
           .mapFromDatabaseResponse(data['${effectivePrefix}photo']),
       heatCycleStart: const DateTimeType()
@@ -406,7 +406,9 @@ class Horse extends DataClass implements Insertable<Horse> {
       map['sex'] = Variable<int>(converter.mapToSql(sex)!);
     }
     map['date_of_birth'] = Variable<DateTime>(dateOfBirth);
-    map['height'] = Variable<double>(height);
+    if (!nullToAbsent || height != null) {
+      map['height'] = Variable<double?>(height);
+    }
     if (!nullToAbsent || photo != null) {
       map['photo'] = Variable<Uint8List?>(photo);
     }
@@ -440,7 +442,8 @@ class Horse extends DataClass implements Insertable<Horse> {
       name: Value(name),
       sex: Value(sex),
       dateOfBirth: Value(dateOfBirth),
-      height: Value(height),
+      height:
+          height == null && nullToAbsent ? const Value.absent() : Value(height),
       photo:
           photo == null && nullToAbsent ? const Value.absent() : Value(photo),
       heatCycleStart: heatCycleStart == null && nullToAbsent
@@ -470,7 +473,7 @@ class Horse extends DataClass implements Insertable<Horse> {
       name: serializer.fromJson<String>(json['name']),
       sex: serializer.fromJson<Sex>(json['sex']),
       dateOfBirth: serializer.fromJson<DateTime>(json['dateOfBirth']),
-      height: serializer.fromJson<double>(json['height']),
+      height: serializer.fromJson<double?>(json['height']),
       photo: serializer.fromJson<Uint8List?>(json['photo']),
       heatCycleStart: serializer.fromJson<DateTime?>(json['heatCycleStart']),
       notes: serializer.fromJson<String?>(json['notes']),
@@ -489,7 +492,7 @@ class Horse extends DataClass implements Insertable<Horse> {
       'name': serializer.toJson<String>(name),
       'sex': serializer.toJson<Sex>(sex),
       'dateOfBirth': serializer.toJson<DateTime>(dateOfBirth),
-      'height': serializer.toJson<double>(height),
+      'height': serializer.toJson<double?>(height),
       'photo': serializer.toJson<Uint8List?>(photo),
       'heatCycleStart': serializer.toJson<DateTime?>(heatCycleStart),
       'notes': serializer.toJson<String?>(notes),
@@ -506,7 +509,7 @@ class Horse extends DataClass implements Insertable<Horse> {
           String? name,
           Sex? sex,
           DateTime? dateOfBirth,
-          double? height,
+          Value<double?> height = const Value.absent(),
           Value<Uint8List?> photo = const Value.absent(),
           Value<DateTime?> heatCycleStart = const Value.absent(),
           Value<String?> notes = const Value.absent(),
@@ -526,7 +529,7 @@ class Horse extends DataClass implements Insertable<Horse> {
         name: name ?? this.name,
         sex: sex ?? this.sex,
         dateOfBirth: dateOfBirth ?? this.dateOfBirth,
-        height: height ?? this.height,
+        height: height.present ? height.value : this.height,
         photo: photo.present ? photo.value : this.photo,
         heatCycleStart:
             heatCycleStart.present ? heatCycleStart.value : this.heatCycleStart,
@@ -596,7 +599,7 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
   final Value<String> name;
   final Value<Sex> sex;
   final Value<DateTime> dateOfBirth;
-  final Value<double> height;
+  final Value<double?> height;
   final Value<Uint8List?> photo;
   final Value<DateTime?> heatCycleStart;
   final Value<String?> notes;
@@ -625,7 +628,7 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
     required String name,
     required Sex sex,
     required DateTime dateOfBirth,
-    required double height,
+    this.height = const Value.absent(),
     this.photo = const Value.absent(),
     this.heatCycleStart = const Value.absent(),
     this.notes = const Value.absent(),
@@ -634,8 +637,7 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
   })  : registrationName = Value(registrationName),
         name = Value(name),
         sex = Value(sex),
-        dateOfBirth = Value(dateOfBirth),
-        height = Value(height);
+        dateOfBirth = Value(dateOfBirth);
   static Insertable<Horse> custom({
     Expression<String>? registrationName,
     Expression<String?>? registrationNumber,
@@ -644,7 +646,7 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
     Expression<String>? name,
     Expression<Sex>? sex,
     Expression<DateTime>? dateOfBirth,
-    Expression<double>? height,
+    Expression<double?>? height,
     Expression<Uint8List?>? photo,
     Expression<DateTime?>? heatCycleStart,
     Expression<String?>? notes,
@@ -678,7 +680,7 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
       Value<String>? name,
       Value<Sex>? sex,
       Value<DateTime>? dateOfBirth,
-      Value<double>? height,
+      Value<double?>? height,
       Value<Uint8List?>? photo,
       Value<DateTime?>? heatCycleStart,
       Value<String?>? notes,
@@ -729,7 +731,7 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
       map['date_of_birth'] = Variable<DateTime>(dateOfBirth.value);
     }
     if (height.present) {
-      map['height'] = Variable<double>(height.value);
+      map['height'] = Variable<double?>(height.value);
     }
     if (photo.present) {
       map['photo'] = Variable<Uint8List?>(photo.value);
@@ -810,8 +812,8 @@ class $HorsesTable extends Horses with TableInfo<$HorsesTable, Horse> {
           typeName: 'INTEGER', requiredDuringInsert: true);
   final VerificationMeta _heightMeta = const VerificationMeta('height');
   late final GeneratedColumn<double?> height = GeneratedColumn<double?>(
-      'height', aliasedName, false,
-      typeName: 'REAL', requiredDuringInsert: true);
+      'height', aliasedName, true,
+      typeName: 'REAL', requiredDuringInsert: false);
   final VerificationMeta _photoMeta = const VerificationMeta('photo');
   late final GeneratedColumn<Uint8List?> photo = GeneratedColumn<Uint8List?>(
       'photo', aliasedName, true,
@@ -906,8 +908,6 @@ class $HorsesTable extends Horses with TableInfo<$HorsesTable, Horse> {
     if (data.containsKey('height')) {
       context.handle(_heightMeta,
           height.isAcceptableOrUnknown(data['height']!, _heightMeta));
-    } else if (isInserting) {
-      context.missing(_heightMeta);
     }
     if (data.containsKey('photo')) {
       context.handle(

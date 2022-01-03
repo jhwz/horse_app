@@ -41,7 +41,7 @@ class _HorseHeatPage extends State<HorseHeatPage> {
           heatCycleStart:
               raw is DateTime ? drift.Value(raw) : const drift.Value.absent());
       try {
-        await DB.updateHorse(horse);
+        await db.updateHorse(horse);
       } catch (e) {
         setState(() {
           updateErr = 'Failed to update: ${e.toString()}';

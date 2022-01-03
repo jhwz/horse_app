@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:horse_app/theme.dart';
 
 class KeyVal extends StatelessWidget {
   final String text;
   final String value;
+  final bool muted;
 
-  const KeyVal({Key? key, required this.text, required this.value})
+  const KeyVal(
+      {Key? key, required this.text, required this.value, this.muted = false})
       : super(key: key);
 
   Widget _keyWidget(BuildContext context) {
@@ -14,13 +17,28 @@ class KeyVal extends StatelessWidget {
     );
   }
 
+  Widget _valueWidget(BuildContext context) {
+    return Text(
+      value,
+      style: TextStyle(
+        fontSize: 16,
+        color: muted
+            ? Theme.of(context)
+                .colorScheme
+                .onBackground
+                .mute(50, Theme.of(context).brightness)
+            : null,
+      ),
+    );
+  }
+
   Widget _mainWidget(BuildContext context) {
     if (value.length > 30) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _keyWidget(context),
-          Text(value, style: const TextStyle(fontSize: 16)),
+          Row(children: [_keyWidget(context)]),
+          _valueWidget(context),
         ],
       );
     }
@@ -29,7 +47,7 @@ class KeyVal extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         _keyWidget(context),
-        Text(value, style: const TextStyle(fontSize: 16)),
+        _valueWidget(context),
       ],
     );
   }

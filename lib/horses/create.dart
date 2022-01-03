@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:horse_app/horses/heat.dart';
 import 'package:horse_app/reactive/validators.dart';
+import 'package:horse_app/utils/height_unit.dart';
 import 'package:horse_app/utils/labelled_divider.dart';
 
 import 'package:reactive_forms/reactive_forms.dart';
@@ -44,8 +45,7 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
       'dateOfBirth': FormControl<DateTime>(
           validators: [Validators.required], value: horse?.dateOfBirth),
       'sex': FormControl<Sex>(value: horse?.sex ?? Sex.female),
-      'height': FormControl<double>(
-          validators: [CustomValidators.hands], value: horse?.height),
+      'height': FormControl<double>(validators: [], value: horse?.height),
     });
   }
 
@@ -121,6 +121,7 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
 
                   const LabelledDivider("Details"),
                   ReactiveDateTimePicker(
+                    lastDate: DateTime.now(),
                     formControlName: 'dateOfBirth',
                     decoration: const InputDecoration(
                       labelText: 'Date of Birth',
@@ -141,18 +142,9 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
                       helperText: '',
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 64),
-                    child: ReactiveTextField(
-                      valueAccessor: DoubleValueAccessor(fractionDigits: 1),
-                      formControlName: 'height',
-                      decoration: const InputDecoration(
-                          labelText: 'Height (hands)', suffixText: 'hh'),
-                      validationMessages: (c) => {
-                        ValidationMessage.number:
-                            "Invalid hands format; try '15.3'"
-                      },
-                    ),
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 64),
+                    child: ReactiveHeightField(formControlName: "height"),
                   ),
                 ]
                     .where((e) => e != null)
@@ -210,8 +202,8 @@ class CreateHorseSubmitButton extends StatelessWidget {
                   );
 
                   await (update
-                      ? DB.updateHorse(horse)
-                      : DB.createHorse(horse));
+                      ? db.updateHorse(horse)
+                      : db.createHorse(horse));
 
                   showSuccess(context,
                       'Sucessfully ${update ? 'updated' : 'created'}!');

@@ -160,3 +160,19 @@ String formatStr(String s) {
   }
   return out;
 }
+
+String toCamelCase(String s) {
+  String out = '';
+  var uppercase = false;
+  for (int i = 0; i < s.length; i++) {
+    if (uppercase) {
+      out += s[i].toUpperCase();
+      uppercase = false;
+    } else if (s[i] == '_' || s[i] == '-' || s[i] == ' ') {
+      uppercase = true;
+    } else {
+      out += s[i].toLowerCase();
+    }
+  }
+  return out;
+}

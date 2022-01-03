@@ -49,12 +49,22 @@ class _EventsPageState extends State<EventsPage> {
                   e is List<Event> ? value! + e.length : value! + 1) ??
           0;
 
+      final endOfFocusedDay = DateTime(
+        _focusedDay.year,
+        _focusedDay.month,
+        _focusedDay.day,
+        23,
+        59,
+        59,
+        999,
+      );
+
       // fetch the horses
-      var events = await DB.listEvents(
+      var events = await db.listEvents(
         filter: filter,
         offset: pageKey,
         limit: _pageSize,
-        now: _focusedDay.add(const Duration(hours: 23, minutes: 59)),
+        now: endOfFocusedDay,
       );
 
       if (events.isEmpty) {
@@ -92,11 +102,11 @@ class _EventsPageState extends State<EventsPage> {
         while_loop:
         while (!isLastPage) {
           pageKey += _pageSize;
-          var eventsNext = await DB.listEvents(
+          var eventsNext = await db.listEvents(
             filter: filter,
             offset: pageKey,
             limit: _pageSize,
-            now: _focusedDay.add(const Duration(hours: 23, minutes: 59)),
+            now: endOfFocusedDay,
           );
           isLastPage = eventsNext.length < _pageSize;
           for (int i = 0; i < eventsNext.length; i++) {
@@ -137,11 +147,10 @@ class _EventsPageState extends State<EventsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: searchBarOrTitle,
+        title: AppBarAnimator(child: searchBarOrTitle),
         actions: [
           IconButton(
             onPressed: () {
-              showNotification();
               setState(() {
                 if (searchIconOrCancel.icon == Icons.search) {
                   searchIconOrCancel = const Icon(Icons.cancel);
@@ -154,8 +163,10 @@ class _EventsPageState extends State<EventsPage> {
                 } else {
                   searchIconOrCancel = const Icon(Icons.search);
                   searchBarOrTitle = Text(title);
-                  filter = '';
-                  _pagingController.refresh();
+                  if (filter != '') {
+                    filter = '';
+                    _pagingController.refresh();
+                  }
                 }
               });
             },
@@ -188,8 +199,7 @@ class _EventsPageState extends State<EventsPage> {
                   },
                   onDaySelected: (_, focusedDay) {
                     setState(() {
-                      _focusedDay =
-                          focusedDay; // update `_focusedDay` here as well
+                      _focusedDay = focusedDay;
                       _pagingController.refresh();
                     });
                   },

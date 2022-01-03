@@ -4,6 +4,7 @@ import 'package:horse_app/horses/create.dart';
 import 'package:horse_app/horses/heat.dart';
 import 'package:horse_app/horses/notes.dart';
 import 'package:horse_app/horses/pedigree.dart';
+import 'package:horse_app/utils/utils.dart';
 
 import "../state/db.dart";
 
@@ -32,14 +33,39 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (String value) async {
+              if (value == 'Delete') {
+                try {
+                  await db.deleteHorse(horse.registrationName);
+                  showSuccess(context, 'Deleted');
+                  Navigator.pop(context);
+                } catch (e) {
+                  showError(context, 'Deleting failed: ${e.toString()}');
+                }
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return {'Delete'}.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          ),
+        ],
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 4.0),
         child: SingleChildScrollView(
           child: Column(
             children: [
               const SizedBox(height: 16),
               ListTile(
+                leading: const Icon(Icons.info_outline_rounded),
                 title: const Text('General Information'),
                 subtitle: const Text('Identification, sex, DOB and more'),
                 trailing: const Icon(Icons.keyboard_arrow_right_outlined),
@@ -59,6 +85,7 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                 ),
               ),
               ListTile(
+                leading: const Icon(Icons.note_alt_outlined),
                 title: const Text('Notes'),
                 subtitle: Text('General notes about ${horse.displayName}'),
                 trailing: const Icon(Icons.keyboard_arrow_right_outlined),
@@ -74,7 +101,7 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                   if (newNotes != null && newNotes is String) {
                     setState(() {
                       horse = horse.copyWith(notes: drift.Value(newNotes));
-                      DB.updateHorse(horse);
+                      db.updateHorse(horse);
                     });
                   }
                 },
@@ -83,6 +110,7 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                 ),
               ),
               ListTile(
+                leading: const Icon(Icons.account_tree_outlined),
                 title: const Text('Pedigree'),
                 subtitle: const Text('View sire, dam and offspring'),
                 trailing: const Icon(Icons.keyboard_arrow_right_outlined),
@@ -105,6 +133,7 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
               ),
               if (horse.sex == Sex.female)
                 ListTile(
+                  leading: const Icon(Icons.change_circle_outlined),
                   title: const Text('Heat cycle'),
                   subtitle: horse.heatCycleStart == null
                       ? const Text('No dates set yet!')

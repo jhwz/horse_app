@@ -4,7 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:horse_app/preferences.dart';
 
 final appThemeProvider =
-    StateProvider<ThemeMode>((ref) => ref.watch(preferences).themeMode);
+    StateNotifierProvider<PreferencesNotifier<ThemeMode>, ThemeMode>(
+  (ref) => PreferencesNotifier(
+    "themeMode",
+    ref,
+    (prefs, key) => ThemeMode.values[prefs.getInt(key) ?? 0],
+    (prefs, key, value) => prefs.setInt(key, value.index),
+    ThemeMode.system,
+  ),
+);
 
 ThemeData darkTheme() {
   return ThemeData(
@@ -97,4 +105,29 @@ ThemeData lightTheme() {
       behavior: SnackBarBehavior.floating,
     ),
   );
+}
+
+extension ColorX on Color {
+
+  Color mute(int percent, Brightness brightness) {
+    return brightness == Brightness.dark ? darken(percent) : lighten(percent);
+  }
+
+  /// Darken a color by [percent] amount (100 = black)
+// ........................................................
+  Color darken([int percent = 10]) {
+    assert(1 <= percent && percent <= 100);
+    var f = 1 - percent / 100;
+    return Color.fromARGB(
+        alpha, (red * f).round(), (green * f).round(), (blue * f).round());
+  }
+
+  /// Lighten a color by [percent] amount (100 = white)
+// ........................................................
+  Color lighten([int percent = 10]) {
+    assert(1 <= percent && percent <= 100);
+    var p = percent / 100;
+    return Color.fromARGB(alpha, red + ((255 - red) * p).round(),
+        green + ((255 - green) * p).round(), blue + ((255 - blue) * p).round());
+  }
 }

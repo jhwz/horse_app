@@ -34,7 +34,7 @@ class _HorsePedigreePage extends State<HorsePedigreePage> {
   Future<Horse?> _tryGetHorse(String? registrationName) async {
     if (registrationName == null) return null;
     try {
-      return await DB.getHorse(registrationName);
+      return await db.getHorse(registrationName);
     } catch (e) {
       return null;
     }
@@ -56,6 +56,7 @@ class _HorsePedigreePage extends State<HorsePedigreePage> {
           ParentSection(
             horse: horse,
             repr: "Sire",
+            parentSex: Sex.male,
             future: _tryGetHorse(horse.sireRegistrationName),
             onUpdate: (newSire) {
               setState(() {
@@ -64,7 +65,7 @@ class _HorsePedigreePage extends State<HorsePedigreePage> {
                       ? drift.Value(newSire.registrationName)
                       : const drift.Value(null),
                 );
-                handle(context, DB.updateHorse(horse));
+                handle(context, db.updateHorse(horse));
               });
             },
           ),
@@ -72,6 +73,7 @@ class _HorsePedigreePage extends State<HorsePedigreePage> {
           ParentSection(
             horse: horse,
             repr: "Dam",
+            parentSex: Sex.female,
             future: _tryGetHorse(horse.damRegistrationName),
             onUpdate: (newDam) {
               setState(() {
@@ -80,12 +82,12 @@ class _HorsePedigreePage extends State<HorsePedigreePage> {
                       ? drift.Value(newDam.registrationName)
                       : const drift.Value(null),
                 );
-                handle(context, DB.updateHorse(horse));
+                handle(context, db.updateHorse(horse));
               });
             },
           ),
           FutureBuilder<List<Horse>>(
-            future: DB.getHorseOffspring(horse.registrationName),
+            future: db.getHorseOffspring(horse.registrationName),
             builder: (context, snapshot) {
               Widget inColumn(Widget w) {
                 return Column(
@@ -122,7 +124,7 @@ class _HorsePedigreePage extends State<HorsePedigreePage> {
 
               return Column(
                 children: [
-                  LabelledDivider('Offspring (${offspring.length})'),
+                  LabelledDivider('Offspring (${offspring.length})', left: 16),
                   for (var horse in offspring)
                     HorseListItem(
                       horse: horse,
@@ -149,6 +151,7 @@ class ParentSection extends StatelessWidget {
   final String repr;
   final Future<Horse?> future;
   final Horse horse;
+  final Sex parentSex;
   final Function(Horse?) onUpdate;
 
   const ParentSection(
@@ -156,7 +159,8 @@ class ParentSection extends StatelessWidget {
       required this.repr,
       required this.future,
       required this.horse,
-      required this.onUpdate})
+      required this.onUpdate,
+      required this.parentSex})
       : super(key: key);
 
   @override
@@ -187,8 +191,8 @@ class ParentSection extends StatelessWidget {
                   var next = await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          SelectFromList(before: horse.dateOfBirth),
+                      builder: (context) => SelectFromList(
+                          before: horse.dateOfBirth, sex: parentSex),
                     ),
                   );
                   if (next != null && next is Horse) onUpdate(next);

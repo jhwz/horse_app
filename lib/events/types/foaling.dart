@@ -23,7 +23,7 @@ class FoalingEvent extends ET {
   @override
   void onCreate(Horse h) async {
     var updated = h.updateHeatFromFoalingDate(DateTime.now());
-    await DB.updateHorse(updated);
+    await db.updateHorse(updated);
   }
 
   @override

@@ -12,28 +12,17 @@ import 'package:reactive_forms/reactive_forms.dart';
 // of the known event types.
 abstract class ET {
   // event getters
-  static ET get feed => NoopEvent('feed');
 
   static ET get drench => DrenchEvent();
   static ET get miteTreatment => MiteTreatmentEvent();
 
-  static ET get farrier => NoopEvent('farrier');
-  static ET get vet => NoopEvent('vet');
-  static ET get dentist => NoopEvent('dentist');
-
   static ET get pregnancyScans => PregnancyEvent();
   static ET get foaling => FoalingEvent();
 
-  // all supported event types
+  // all special event types
   static List<ET> types = [
-    feed,
-    //
     drench,
     miteTreatment,
-    //
-    farrier,
-    vet,
-    dentist,
     //
     pregnancyScans,
     foaling,
@@ -48,9 +37,11 @@ abstract class ET {
 
 // type of the event, arbitrary string
   String get type;
+  String get formattedType => formatStr(type);
 
   // the reactive forms fields for the event
-  Map<String, AbstractControl<dynamic>> fields(Map<String, dynamic>? defaultVals);
+  Map<String, AbstractControl<dynamic>> fields(
+      Map<String, dynamic>? defaultVals);
 
   // the corresponding widgets for the above fields, tightly coupled
   // with the above fields

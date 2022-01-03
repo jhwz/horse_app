@@ -20,26 +20,18 @@ class _EventSummaryPageState extends State<EventSummaryPage> {
   List<Widget> _buildEvents(Event e) {
     var out = <Widget>[];
 
-    Widget textWidget(String? text, String value, {bool bold = false}) {
-      return TextField(
-        controller: TextEditingController(text: value),
-        decoration: InputDecoration(
-          labelText: text,
-          border: InputBorder.none,
-        ),
-        style:
-            TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal),
-        readOnly: true,
-        focusNode: FocusNode(canRequestFocus: false, skipTraversal: true),
-      );
-    }
+    if (e.extra != null) {
+      for (final key in e.extra!.keys) {
+        if (e.extra![key] is! String) continue;
 
-    out = out
-        .map<Widget>((w) => Padding(
-              padding: const EdgeInsets.only(left: 32, right: 32, top: 12),
-              child: w,
-            ))
-        .toList();
+        out.add(
+          KeyVal(
+            text: formatStr(key),
+            value: formatStr(e.extra![key]),
+          ),
+        );
+      }
+    }
 
     return out;
   }
@@ -48,7 +40,7 @@ class _EventSummaryPageState extends State<EventSummaryPage> {
   Widget build(BuildContext context) {
     final e = widget.event;
     return Scaffold(
-      appBar: AppBar(title: Text(formatStr(e.type))),
+      appBar: AppBar(title: Text(e.formattedType)),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -62,7 +54,11 @@ class _EventSummaryPageState extends State<EventSummaryPage> {
               ),
             ),
             KeyVal(text: "Time of event:", value: e.date.dateTime()),
-            KeyVal(text: "Notes:", value: e.notes != null ? e.notes! : "None"),
+            KeyVal(
+              text: "Notes:",
+              value: e.notes != null ? e.notes! : "None",
+              muted: e.notes == null,
+            ),
             ..._buildEvents(e),
           ],
         ),
