@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:horse_app/horses/list.dart';
 import 'package:horse_app/horses/list_item.dart';
 import 'package:horse_app/horses/single.dart';
+import 'package:horse_app/utils/component_actions.dart';
 import 'package:horse_app/utils/keyval.dart';
 
 import '../utils/utils.dart';
@@ -40,7 +41,33 @@ class _EventSummaryPageState extends State<EventSummaryPage> {
   Widget build(BuildContext context) {
     final e = widget.event;
     return Scaffold(
-      appBar: AppBar(title: Text(e.formattedType)),
+      appBar: AppBar(
+        title: Text(e.formattedType),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (String value) async {
+              if (value == 'Delete') {
+                try {
+                  await db.deleteEvent(e.id);
+                  showSuccess(context, 'Deleted');
+                  Navigator.pop(context, ComponentAction.delete);
+                } catch (e) {
+                  showError(context, 'Deleting failed: ${e.toString()}');
+                }
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return {'Delete'}.map((String choice) {
+                return PopupMenuItem<String>(
+                  value: choice,
+                  child: Text(choice),
+                );
+              }).toList();
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [

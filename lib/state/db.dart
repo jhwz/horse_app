@@ -193,4 +193,8 @@ class AppDb extends _$AppDb {
   Future<void> createEvent(Insertable<Event> e) async {
     await into(events).insert(e);
   }
+
+  Future<void> deleteEvent(int eventID) async {
+    await delete(events).delete(EventsCompanion(id: Value(eventID)));
+  }
 }

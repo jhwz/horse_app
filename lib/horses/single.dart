@@ -52,6 +52,7 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                 return PopupMenuItem<String>(
                   value: choice,
                   child: Text(choice),
+                  
                 );
               }).toList();
             },

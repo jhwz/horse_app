@@ -4,6 +4,7 @@ import 'package:horse_app/events/list_item.dart';
 import 'package:horse_app/events/single.dart';
 import 'package:horse_app/notifications.dart';
 import 'package:horse_app/utils/app_bar_search.dart';
+import 'package:horse_app/utils/component_actions.dart';
 
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -138,9 +139,18 @@ class _EventsPageState extends State<EventsPage> {
   }
 
   Future<void> _onTap(EventHorse e) async {
-    await Navigator.push(context, MaterialPageRoute(builder: (context) {
+    final result = await Navigator.push<ComponentAction>(context,
+        MaterialPageRoute(builder: (context) {
       return EventSummaryPage(event: e);
     }));
+    if (result is ComponentAction) {
+      switch (result) {
+        case ComponentAction.delete:
+          _pagingController.refresh();
+          break;
+        default:
+      }
+    }
   }
 
   @override
@@ -277,6 +287,7 @@ class _EventsPageState extends State<EventsPage> {
           await Navigator.push(context, MaterialPageRoute(builder: (context) {
             return const NewEventPage();
           }));
+
           _pagingController.refresh();
         },
         tooltip: 'Create Event',
