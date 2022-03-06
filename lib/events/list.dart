@@ -174,7 +174,7 @@ class _EventsPageState extends State<EventsPage> {
           )
         ],
       ),
-      drawer: appDrawer(context, "/logs"),
+      drawer: appDrawer(context, "/events"),
       body: CustomScrollView(
         slivers: <Widget>[
           SliverList(
