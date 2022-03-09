@@ -1,16 +1,9 @@
-import 'dart:ui';
-
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
-import 'package:flutter/widgets.dart';
 
 class EditNotePage extends StatefulWidget {
-  String note;
+  final String note;
 
-  EditNotePage({Key? key, required this.note}) : super(key: key);
+  const EditNotePage({Key? key, required this.note}) : super(key: key);
 
   @override
   _EditNotePageState createState() => _EditNotePageState();

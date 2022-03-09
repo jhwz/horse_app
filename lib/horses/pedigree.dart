@@ -56,7 +56,7 @@ class _HorsePedigreePage extends State<HorsePedigreePage> {
           ParentSection(
             horse: horse,
             repr: "Sire",
-            parentSex: Sex.male,
+            parentSex: const [Sex.stallion, Sex.gelding],
             future: _tryGetHorse(horse.sireRegistrationName),
             onUpdate: (newSire) {
               setState(() {
@@ -73,7 +73,7 @@ class _HorsePedigreePage extends State<HorsePedigreePage> {
           ParentSection(
             horse: horse,
             repr: "Dam",
-            parentSex: Sex.female,
+            parentSex: const [Sex.mare],
             future: _tryGetHorse(horse.damRegistrationName),
             onUpdate: (newDam) {
               setState(() {
@@ -151,7 +151,7 @@ class ParentSection extends StatelessWidget {
   final String repr;
   final Future<Horse?> future;
   final Horse horse;
-  final Sex parentSex;
+  final List<Sex> parentSex;
   final Function(Horse?) onUpdate;
 
   const ParentSection(

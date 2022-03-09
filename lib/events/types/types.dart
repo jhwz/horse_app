@@ -54,7 +54,7 @@ abstract class ET {
   bool get onlyAppliesToOne => !canApplyToMany;
 
   // optional filter than can be overridden, allows the interface
-  // to only display some events
+  // to only display horses which are able to be chosen for this event.
   bool appliesTo(Horse h) {
     return true;
   }

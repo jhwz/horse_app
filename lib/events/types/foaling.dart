@@ -17,7 +17,7 @@ class FoalingEvent extends ET {
 
   @override
   bool appliesTo(Horse h) {
-    return h.sex == Sex.female;
+    return h.sex == Sex.mare;
   }
 
   @override
@@ -37,7 +37,7 @@ class FoalingEvent extends ET {
           value: defaultVals?[sireRegistrationName] ?? '',
           validators: [Validators.required]),
       foalSex: FormControl<int>(
-          value: defaultVals?[foalSex] ?? Sex.female.index,
+          value: defaultVals?[foalSex] ?? Sex.mare.index,
           validators: [Validators.required]),
     };
   }
@@ -62,16 +62,10 @@ class FoalingEvent extends ET {
       ),
       ReactiveDropdownField(
         formControlName: foalSex,
-        items: [
-          DropdownMenuItem(
-            value: Sex.female.index,
-            child: const Text('Female'),
-          ),
-          DropdownMenuItem(
-            value: Sex.male.index,
-            child: const Text('Male'),
-          ),
-        ],
+        items: Sex.values
+            .map(
+                (e) => DropdownMenuItem(value: e, child: Text(e.toSexString())))
+            .toList(),
         decoration: const InputDecoration(
           labelText: 'Sex',
         ),

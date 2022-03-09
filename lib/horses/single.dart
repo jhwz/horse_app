@@ -52,7 +52,6 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                 return PopupMenuItem<String>(
                   value: choice,
                   child: Text(choice),
-                  
                 );
               }).toList();
             },
@@ -132,7 +131,7 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                   borderRadius: BorderRadius.all(Radius.circular(4)),
                 ),
               ),
-              if (horse.sex == Sex.female)
+              if (horse.sex == Sex.mare)
                 ListTile(
                   leading: const Icon(Icons.change_circle_outlined),
                   title: const Text('Heat cycle'),
@@ -143,7 +142,7 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                           : const Text('Not in Heat'),
                   trailing: const Icon(Icons.keyboard_arrow_right_outlined),
                   onTap: () async {
-                    var next = await Navigator.push<Horse>(
+                    var next = await Navigator.push<Horse?>(
                       context,
                       MaterialPageRoute(
                         builder: (context) => HorseHeatPage(horse: horse),

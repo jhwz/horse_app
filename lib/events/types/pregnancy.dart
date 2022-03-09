@@ -18,7 +18,7 @@ class PregnancyEvent extends ET {
 
   @override
   bool appliesTo(Horse h) {
-    return h.sex == Sex.female;
+    return h.sex == Sex.mare;
   }
 
   @override

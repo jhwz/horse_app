@@ -25,9 +25,12 @@ class HorseListItem extends StatelessWidget {
         minVerticalPadding: 0,
         leading: SizedBox(
           child: horse.photo != null
-              ? Image.memory(horse.photo!)
-              : const SizedBox.shrink(),
-          width: 80,
+              ? Image.memory(
+                  horse.photo!,
+                  fit: BoxFit.cover,
+                )
+              : const SizedBox(),
+          width: 64,
           height: 64,
         ),
         title: Text(horse.displayName),

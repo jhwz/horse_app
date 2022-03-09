@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horse_app/notifications.dart';
 import 'package:horse_app/preferences.dart';
+import 'package:horse_app/profile/profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'events/list.dart';
@@ -20,7 +21,8 @@ void main() async {
   ]);
   final sharedPrefs = awaited[0] as SharedPreferences;
 
-  db = AppDb();
+  db = AppDb(prefs: sharedPrefs);
+
   runApp(
     ProviderScope(
       child: const App(),
@@ -55,6 +57,10 @@ class App extends ConsumerWidget {
         }
         if (settings.name == '/settings') {
           return MaterialPageRoute(builder: (context) => const SettingsPage());
+        }
+
+        if (settings.name == '/profile') {
+          return MaterialPageRoute(builder: (context) => const ProfilePage());
         }
       },
     );

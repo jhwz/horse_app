@@ -1,14 +1,13 @@
 import 'dart:typed_data';
 
-import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
-import 'package:horse_app/horses/heat.dart';
-import 'package:horse_app/reactive/validators.dart';
+
 import 'package:horse_app/utils/height_unit.dart';
 import 'package:horse_app/utils/labelled_divider.dart';
 
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:reactive_date_time_picker/reactive_date_time_picker.dart';
+import 'package:reactive_range_slider/reactive_range_slider.dart';
 import '../reactive/image_picker.dart';
 
 import '../utils/utils.dart';
@@ -44,10 +43,14 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
           validators: [Validators.required], value: horse?.name),
       'dateOfBirth': FormControl<DateTime>(
           validators: [Validators.required], value: horse?.dateOfBirth),
-      'sex': FormControl<Sex>(value: horse?.sex ?? Sex.female),
+      'sex': FormControl<Sex>(value: horse?.sex ?? Sex.mare),
       'height': FormControl<double>(validators: [], value: horse?.height),
+      'weight': FormControl<RangeValues>(
+          value: RangeValues(horse?.minWeight ?? 0, horse?.maxWeight ?? 0))
     });
   }
+
+  static const _padding = EdgeInsets.only(top: 20.0);
 
   @override
   Widget build(BuildContext context) {
@@ -70,12 +73,12 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
           ),
         ),
         body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 8.0),
           child: ReactiveForm(
             formGroup: form,
             child: SingleChildScrollView(
               child: Column(
-                children: <Widget?>[
+                children: [
                   ReactiveImagePicker(
                     formControlName: 'photo',
                     decoration: const InputDecoration(
@@ -96,23 +99,33 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
                   //
 
                   const LabelledDivider("Identification"),
-                  ReactiveTextField(
-                    readOnly: horse != null,
-                    formControlName: 'registrationName',
-                    decoration: const InputDecoration(
-                      labelText: 'Registration Name',
+
+                  Padding(
+                    padding: _padding,
+                    child: ReactiveTextField(
+                      readOnly: horse != null,
+                      formControlName: 'registrationName',
+                      decoration: const InputDecoration(
+                        labelText: 'Registration Name',
+                      ),
                     ),
                   ),
-                  ReactiveTextField(
-                    formControlName: 'registrationNumber',
-                    decoration: const InputDecoration(
-                      labelText: 'Registration Number',
+                  Padding(
+                    padding: _padding,
+                    child: ReactiveTextField(
+                      formControlName: 'registrationNumber',
+                      decoration: const InputDecoration(
+                        labelText: 'Registration Number',
+                      ),
                     ),
                   ),
-                  ReactiveTextField(
-                    formControlName: 'name',
-                    decoration: const InputDecoration(
-                      labelText: 'Paddock Name',
+                  Padding(
+                    padding: _padding,
+                    child: ReactiveTextField(
+                      formControlName: 'name',
+                      decoration: const InputDecoration(
+                        labelText: 'Paddock Name',
+                      ),
                     ),
                   ),
 
@@ -120,38 +133,54 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
                   //
 
                   const LabelledDivider("Details"),
-                  ReactiveDateTimePicker(
-                    lastDate: DateTime.now(),
-                    formControlName: 'dateOfBirth',
-                    decoration: const InputDecoration(
-                      labelText: 'Date of Birth',
-                      helperText: '',
-                      suffixIcon: Icon(Icons.calendar_today),
+                  Padding(
+                    padding: _padding,
+                    child: ReactiveDateTimePicker(
+                      lastDate: DateTime.now(),
+                      formControlName: 'dateOfBirth',
+                      decoration: const InputDecoration(
+                        labelText: 'Date of Birth',
+                        helperText: '',
+                        suffixIcon: Icon(Icons.calendar_today),
+                      ),
                     ),
                   ),
                   ReactiveDropdownField(
                     formControlName: 'sex',
-                    items: const [
-                      DropdownMenuItem(
-                          value: Sex.female, child: Text('Female')),
-                      DropdownMenuItem(value: Sex.male, child: Text('Male')),
-                    ],
+                    items: Sex.values
+                        .map((e) => DropdownMenuItem(
+                            value: e, child: Text(e.toSexString())))
+                        .toList(),
                     isDense: true,
                     decoration: const InputDecoration(
                       labelText: 'Sex',
                       helperText: '',
                     ),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 64),
-                    child: ReactiveHeightField(formControlName: "height"),
+
+                  const ReactiveHeightField(formControlName: "height"),
+
+                  Padding(
+                    padding: _padding,
+                    child: ReactiveRangeSlider(
+                      decoration: const InputDecoration(
+                        labelText: 'Weight Estimate',
+                        isDense: true,
+                      ),
+                      min: 0,
+                      max: 1000,
+                      labels: const RangeLabels("Min Weight", "Max Weight"),
+                      labelBuilder: (v) => RangeLabels(
+                        '${v.start.toStringAsFixed(0)} kg',
+                        '${v.end.toStringAsFixed(0)} kg',
+                      ),
+                      divisions: 10,
+                      formControlName: "weight",
+                    ),
                   ),
-                ]
-                    .where((e) => e != null)
-                    .toList()
-                    .map<Widget>((w) => Padding(
-                        padding: const EdgeInsets.only(top: 12), child: w))
-                    .toList(),
+
+                  const SizedBox(height: 48.0),
+                ],
               ),
             ),
           ),
@@ -191,6 +220,7 @@ class CreateHorseSubmitButton extends StatelessWidget {
                     throw Exception('No values supplied');
                   }
 
+                  final weight = f["weight"] as RangeValues;
                   var horse = Horse(
                     photo: f['photo'],
                     registrationName: f['registrationName'],
@@ -199,6 +229,8 @@ class CreateHorseSubmitButton extends StatelessWidget {
                     dateOfBirth: f['dateOfBirth'],
                     height: f['height'],
                     sex: f['sex'],
+                    minWeight: weight.start,
+                    maxWeight: weight.end,
                   );
 
                   await (update

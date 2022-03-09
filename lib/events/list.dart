@@ -134,6 +134,7 @@ class _EventsPageState extends State<EventsPage> {
         _pagingController.appendPage(out, nextPageKey);
       }
     } catch (error) {
+      showError(context, error.toString());
       _pagingController.error = error;
     }
   }

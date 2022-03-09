@@ -93,6 +93,15 @@ Drawer appDrawer(BuildContext context, String root) {
           },
         ),
         ListTile(
+          title: const Text('Profile'),
+          selected: root == '/profile',
+          leading: const Icon(Icons.account_circle),
+          onTap: () {
+            Navigator.of(context)
+                .pushNamedAndRemoveUntil("/profile", (route) => false);
+          },
+        ),
+        ListTile(
           title: const Text('Settings'),
           selected: root == '/settings',
           leading: const Icon(Icons.settings),

@@ -7,7 +7,7 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
 class SelectFromList extends StatefulWidget {
   final DateTime? before;
-  final Sex? sex;
+  final List<Sex>? sex;
 
   const SelectFromList({Key? key, this.before, this.sex}) : super(key: key);
 
