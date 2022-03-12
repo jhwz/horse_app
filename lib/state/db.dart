@@ -393,6 +393,12 @@ class AppDb extends _$AppDb {
     await into(owners).insert(owner);
   }
 
+  Future<Owner?> getOwner(String uuid) async {
+    await (select(owners)
+          ..whereSamePrimaryKey(OwnersCompanion(id: Value(uuid))))
+        .getSingleOrNull();
+  }
+
   // *******************
   // MIGRATIONS
   // *******************
@@ -437,9 +443,13 @@ class AppDb extends _$AppDb {
 
     // Add an empty owner entry to the
     // database for this user.
-    uuid = const Uuid().v4();
-    await createOwner(Owner(id: uuid));
-    await prefs.setString(uuidPrefsKey, uuid);
+    if (!prefs.containsKey(uuidPrefsKey)) {
+      uuid = const Uuid().v4();
+      await prefs.setString(uuidPrefsKey, uuid);
+    }
+    if ((await getOwner(uuid)) == null) {
+      await createOwner(Owner(id: uuid));
+    }
 
     // update all the horses to point at that owner
     await transaction(() async {
