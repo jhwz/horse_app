@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horse_app/preferences.dart';
+import 'package:horse_app/state/db.dart';
 import 'package:horse_app/theme.dart';
 import 'package:horse_app/utils/utils.dart';
 import 'package:path_provider/path_provider.dart';
@@ -117,6 +118,12 @@ class SettingsPage extends StatelessWidget {
                 },
               );
             },
+          ),
+          ListTile(
+            title: const Text('Version'),
+            subtitle: Text('${db.schemaVersion}'),
+            leading: const Icon(Icons.info),
+            isThreeLine: true,
           )
         ]));
   }

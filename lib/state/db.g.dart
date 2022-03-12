@@ -1483,13 +1483,446 @@ class $OwnersTable extends Owners with TableInfo<$OwnersTable, Owner> {
   }
 }
 
+class HorseGalleryData extends DataClass
+    implements Insertable<HorseGalleryData> {
+  final int id;
+  final String registrationName;
+  final Uint8List photo;
+  HorseGalleryData(
+      {required this.id, required this.registrationName, required this.photo});
+  factory HorseGalleryData.fromData(Map<String, dynamic> data,
+      {String? prefix}) {
+    final effectivePrefix = prefix ?? '';
+    return HorseGalleryData(
+      id: const IntType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}id'])!,
+      registrationName: const StringType().mapFromDatabaseResponse(
+          data['${effectivePrefix}registration_name'])!,
+      photo: const BlobType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}photo'])!,
+    );
+  }
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['registration_name'] = Variable<String>(registrationName);
+    map['photo'] = Variable<Uint8List>(photo);
+    return map;
+  }
+
+  HorseGalleryCompanion toCompanion(bool nullToAbsent) {
+    return HorseGalleryCompanion(
+      id: Value(id),
+      registrationName: Value(registrationName),
+      photo: Value(photo),
+    );
+  }
+
+  factory HorseGalleryData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return HorseGalleryData(
+      id: serializer.fromJson<int>(json['id']),
+      registrationName: serializer.fromJson<String>(json['registrationName']),
+      photo: serializer.fromJson<Uint8List>(json['photo']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'registrationName': serializer.toJson<String>(registrationName),
+      'photo': serializer.toJson<Uint8List>(photo),
+    };
+  }
+
+  HorseGalleryData copyWith(
+          {int? id, String? registrationName, Uint8List? photo}) =>
+      HorseGalleryData(
+        id: id ?? this.id,
+        registrationName: registrationName ?? this.registrationName,
+        photo: photo ?? this.photo,
+      );
+  @override
+  String toString() {
+    return (StringBuffer('HorseGalleryData(')
+          ..write('id: $id, ')
+          ..write('registrationName: $registrationName, ')
+          ..write('photo: $photo')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, registrationName, photo);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is HorseGalleryData &&
+          other.id == this.id &&
+          other.registrationName == this.registrationName &&
+          other.photo == this.photo);
+}
+
+class HorseGalleryCompanion extends UpdateCompanion<HorseGalleryData> {
+  final Value<int> id;
+  final Value<String> registrationName;
+  final Value<Uint8List> photo;
+  const HorseGalleryCompanion({
+    this.id = const Value.absent(),
+    this.registrationName = const Value.absent(),
+    this.photo = const Value.absent(),
+  });
+  HorseGalleryCompanion.insert({
+    this.id = const Value.absent(),
+    required String registrationName,
+    required Uint8List photo,
+  })  : registrationName = Value(registrationName),
+        photo = Value(photo);
+  static Insertable<HorseGalleryData> custom({
+    Expression<int>? id,
+    Expression<String>? registrationName,
+    Expression<Uint8List>? photo,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (registrationName != null) 'registration_name': registrationName,
+      if (photo != null) 'photo': photo,
+    });
+  }
+
+  HorseGalleryCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? registrationName,
+      Value<Uint8List>? photo}) {
+    return HorseGalleryCompanion(
+      id: id ?? this.id,
+      registrationName: registrationName ?? this.registrationName,
+      photo: photo ?? this.photo,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (registrationName.present) {
+      map['registration_name'] = Variable<String>(registrationName.value);
+    }
+    if (photo.present) {
+      map['photo'] = Variable<Uint8List>(photo.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HorseGalleryCompanion(')
+          ..write('id: $id, ')
+          ..write('registrationName: $registrationName, ')
+          ..write('photo: $photo')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $HorseGalleryTable extends HorseGallery
+    with TableInfo<$HorseGalleryTable, HorseGalleryData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $HorseGalleryTable(this.attachedDatabase, [this._alias]);
+  final VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int?> id = GeneratedColumn<int?>(
+      'id', aliasedName, false,
+      type: const IntType(),
+      requiredDuringInsert: false,
+      defaultConstraints: 'PRIMARY KEY AUTOINCREMENT');
+  final VerificationMeta _registrationNameMeta =
+      const VerificationMeta('registrationName');
+  @override
+  late final GeneratedColumn<String?> registrationName =
+      GeneratedColumn<String?>('registration_name', aliasedName, false,
+          type: const StringType(),
+          requiredDuringInsert: true,
+          $customConstraints: 'NOT NULL REFERENCES horses(registration_name)');
+  final VerificationMeta _photoMeta = const VerificationMeta('photo');
+  @override
+  late final GeneratedColumn<Uint8List?> photo = GeneratedColumn<Uint8List?>(
+      'photo', aliasedName, false,
+      type: const BlobType(), requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, registrationName, photo];
+  @override
+  String get aliasedName => _alias ?? 'horseGallery';
+  @override
+  String get actualTableName => 'horseGallery';
+  @override
+  VerificationContext validateIntegrity(Insertable<HorseGalleryData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('registration_name')) {
+      context.handle(
+          _registrationNameMeta,
+          registrationName.isAcceptableOrUnknown(
+              data['registration_name']!, _registrationNameMeta));
+    } else if (isInserting) {
+      context.missing(_registrationNameMeta);
+    }
+    if (data.containsKey('photo')) {
+      context.handle(
+          _photoMeta, photo.isAcceptableOrUnknown(data['photo']!, _photoMeta));
+    } else if (isInserting) {
+      context.missing(_photoMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  HorseGalleryData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    return HorseGalleryData.fromData(data,
+        prefix: tablePrefix != null ? '$tablePrefix.' : null);
+  }
+
+  @override
+  $HorseGalleryTable createAlias(String alias) {
+    return $HorseGalleryTable(attachedDatabase, alias);
+  }
+}
+
+class EventGalleryData extends DataClass
+    implements Insertable<EventGalleryData> {
+  final int id;
+  final int eventID;
+  final Uint8List photo;
+  EventGalleryData(
+      {required this.id, required this.eventID, required this.photo});
+  factory EventGalleryData.fromData(Map<String, dynamic> data,
+      {String? prefix}) {
+    final effectivePrefix = prefix ?? '';
+    return EventGalleryData(
+      id: const IntType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}id'])!,
+      eventID: const IntType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}event_i_d'])!,
+      photo: const BlobType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}photo'])!,
+    );
+  }
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['event_i_d'] = Variable<int>(eventID);
+    map['photo'] = Variable<Uint8List>(photo);
+    return map;
+  }
+
+  EventGalleryCompanion toCompanion(bool nullToAbsent) {
+    return EventGalleryCompanion(
+      id: Value(id),
+      eventID: Value(eventID),
+      photo: Value(photo),
+    );
+  }
+
+  factory EventGalleryData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return EventGalleryData(
+      id: serializer.fromJson<int>(json['id']),
+      eventID: serializer.fromJson<int>(json['eventID']),
+      photo: serializer.fromJson<Uint8List>(json['photo']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'eventID': serializer.toJson<int>(eventID),
+      'photo': serializer.toJson<Uint8List>(photo),
+    };
+  }
+
+  EventGalleryData copyWith({int? id, int? eventID, Uint8List? photo}) =>
+      EventGalleryData(
+        id: id ?? this.id,
+        eventID: eventID ?? this.eventID,
+        photo: photo ?? this.photo,
+      );
+  @override
+  String toString() {
+    return (StringBuffer('EventGalleryData(')
+          ..write('id: $id, ')
+          ..write('eventID: $eventID, ')
+          ..write('photo: $photo')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, eventID, photo);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is EventGalleryData &&
+          other.id == this.id &&
+          other.eventID == this.eventID &&
+          other.photo == this.photo);
+}
+
+class EventGalleryCompanion extends UpdateCompanion<EventGalleryData> {
+  final Value<int> id;
+  final Value<int> eventID;
+  final Value<Uint8List> photo;
+  const EventGalleryCompanion({
+    this.id = const Value.absent(),
+    this.eventID = const Value.absent(),
+    this.photo = const Value.absent(),
+  });
+  EventGalleryCompanion.insert({
+    this.id = const Value.absent(),
+    required int eventID,
+    required Uint8List photo,
+  })  : eventID = Value(eventID),
+        photo = Value(photo);
+  static Insertable<EventGalleryData> custom({
+    Expression<int>? id,
+    Expression<int>? eventID,
+    Expression<Uint8List>? photo,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (eventID != null) 'event_i_d': eventID,
+      if (photo != null) 'photo': photo,
+    });
+  }
+
+  EventGalleryCompanion copyWith(
+      {Value<int>? id, Value<int>? eventID, Value<Uint8List>? photo}) {
+    return EventGalleryCompanion(
+      id: id ?? this.id,
+      eventID: eventID ?? this.eventID,
+      photo: photo ?? this.photo,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (eventID.present) {
+      map['event_i_d'] = Variable<int>(eventID.value);
+    }
+    if (photo.present) {
+      map['photo'] = Variable<Uint8List>(photo.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('EventGalleryCompanion(')
+          ..write('id: $id, ')
+          ..write('eventID: $eventID, ')
+          ..write('photo: $photo')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $EventGalleryTable extends EventGallery
+    with TableInfo<$EventGalleryTable, EventGalleryData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $EventGalleryTable(this.attachedDatabase, [this._alias]);
+  final VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int?> id = GeneratedColumn<int?>(
+      'id', aliasedName, false,
+      type: const IntType(),
+      requiredDuringInsert: false,
+      defaultConstraints: 'PRIMARY KEY AUTOINCREMENT');
+  final VerificationMeta _eventIDMeta = const VerificationMeta('eventID');
+  @override
+  late final GeneratedColumn<int?> eventID = GeneratedColumn<int?>(
+      'event_i_d', aliasedName, false,
+      type: const IntType(),
+      requiredDuringInsert: true,
+      $customConstraints: 'NOT NULL REFERENCES events(id)');
+  final VerificationMeta _photoMeta = const VerificationMeta('photo');
+  @override
+  late final GeneratedColumn<Uint8List?> photo = GeneratedColumn<Uint8List?>(
+      'photo', aliasedName, false,
+      type: const BlobType(), requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, eventID, photo];
+  @override
+  String get aliasedName => _alias ?? 'eventGallery';
+  @override
+  String get actualTableName => 'eventGallery';
+  @override
+  VerificationContext validateIntegrity(Insertable<EventGalleryData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('event_i_d')) {
+      context.handle(_eventIDMeta,
+          eventID.isAcceptableOrUnknown(data['event_i_d']!, _eventIDMeta));
+    } else if (isInserting) {
+      context.missing(_eventIDMeta);
+    }
+    if (data.containsKey('photo')) {
+      context.handle(
+          _photoMeta, photo.isAcceptableOrUnknown(data['photo']!, _photoMeta));
+    } else if (isInserting) {
+      context.missing(_photoMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  EventGalleryData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    return EventGalleryData.fromData(data,
+        prefix: tablePrefix != null ? '$tablePrefix.' : null);
+  }
+
+  @override
+  $EventGalleryTable createAlias(String alias) {
+    return $EventGalleryTable(attachedDatabase, alias);
+  }
+}
+
 abstract class _$AppDb extends GeneratedDatabase {
   _$AppDb(QueryExecutor e) : super(SqlTypeSystem.defaultInstance, e);
   late final $EventsTable events = $EventsTable(this);
   late final $HorsesTable horses = $HorsesTable(this);
   late final $OwnersTable owners = $OwnersTable(this);
+  late final $HorseGalleryTable horseGallery = $HorseGalleryTable(this);
+  late final $EventGalleryTable eventGallery = $EventGalleryTable(this);
   @override
   Iterable<TableInfo> get allTables => allSchemaEntities.whereType<TableInfo>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [events, horses, owners];
+  List<DatabaseSchemaEntity> get allSchemaEntities =>
+      [events, horses, owners, horseGallery, eventGallery];
 }

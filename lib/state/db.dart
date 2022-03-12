@@ -157,7 +157,7 @@ class Owners extends Table {
 
 class HorseGallery extends Table {
   @override
-  String get tableName => "horse_gallery";
+  String get tableName => "horseGallery";
 
   IntColumn get id => integer().autoIncrement()();
 
@@ -171,7 +171,7 @@ class HorseGallery extends Table {
 
 class EventGallery extends Table {
   @override
-  String get tableName => "event_gallery";
+  String get tableName => "eventGallery";
 
   IntColumn get id => integer().autoIncrement()();
 
@@ -236,10 +236,8 @@ class AppDb extends _$AppDb {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (m) async {
-          // Create all the tables
-          await m.createAll();
-        },
+        // This is the default onCreate logic, better to add data in beforeOpen
+        onCreate: (m) async => m.createAll(),
         onUpgrade: (m, from, to) async {
           if (to != schemaVersion) {
             throw Exception('unsupported migration');
@@ -247,32 +245,10 @@ class AppDb extends _$AppDb {
           if (to < from) {
             throw Exception('downgrades not supported');
           }
+          print("running migration from $from to $to");
 
           if (from < 2) {
-            // Add the owners table
-            await m.createTable(owners);
-
-            // Cast the owner and breeders columns to text type now
-            // we are using UUIDs
-            await m.alterTable(TableMigration(
-              horses,
-              columnTransformer: {
-                horses.owner: horses.owner.cast<String>(),
-                horses.breeder: horses.breeder.cast<String>(),
-              },
-              newColumns: [horses.minWeight, horses.maxWeight],
-            ));
-
-            // Add an empty owner entry to the
-            // database for this user.
-            uuid = const Uuid().v4();
-            await createOwner(Owner(id: uuid));
-            await prefs.setString(uuidPrefsKey, uuid);
-
-            // update all the horses to point at that owner
-            await transaction(() async {
-              await update(horses).write(HorsesCompanion(owner: Value(uuid)));
-            });
+            await v1tov2(m);
           }
 
           await m.recreateAllViews();
@@ -350,6 +326,24 @@ class AppDb extends _$AppDb {
         .get();
   }
 
+  Future<List<HorseGalleryData>> getHorseImages(String registrationName) async {
+    final vals = await (select(horseGallery)
+          ..where((tbl) => tbl.registrationName.equals(registrationName)))
+        .get();
+    return vals;
+  }
+
+  Future<Uint8List?> getHorseProfilePicture(Horse h) async {
+    if (h.profilePhoto == null) {
+      return null;
+    }
+    final data = await (select(horseGallery)
+          ..whereSamePrimaryKey(
+              HorseGalleryCompanion(id: Value(h.profilePhoto!))))
+        .getSingleOrNull();
+    return data?.photo;
+  }
+
   // *******************
   // Event queries
   // *******************
@@ -397,5 +391,65 @@ class AppDb extends _$AppDb {
   // *******************
   createOwner(Insertable<Owner> owner) async {
     await into(owners).insert(owner);
+  }
+
+  // *******************
+  // MIGRATIONS
+  // *******************
+
+  v1tov2(Migrator m) async {
+    // Add the new tables
+    await m.createTable(owners);
+    await m.createTable(eventGallery);
+    await m.createTable(horseGallery);
+
+    // Get the existing photo from each horse and add it to
+    // the horse gallery. Then get the id for each of those photos
+    // and set them as the horse's photo.
+    final rows =
+        await customSelect("SELECT photo, registration_name FROM horses").get();
+
+    List<HorseGalleryData> horseGalleryData = [];
+    int idx = 0;
+    for (var row in rows) {
+      final photo = row.read<Uint8List?>("photo");
+      if (photo == null) {
+        continue;
+      }
+      final registrationName = row.read<String>("registration_name");
+      horseGalleryData.add(HorseGalleryData(
+          id: idx, registrationName: registrationName, photo: photo));
+      idx++;
+
+      await horseGallery.update().write(horseGalleryData.last);
+    }
+
+    // Cast the owner and breeders columns to text type now
+    // we are using UUIDs
+    await m.alterTable(TableMigration(
+      horses,
+      columnTransformer: {
+        horses.owner: horses.owner.cast<String>(),
+        horses.breeder: horses.breeder.cast<String>(),
+      },
+      newColumns: [horses.minWeight, horses.maxWeight, horses.profilePhoto],
+    ));
+
+    // Add an empty owner entry to the
+    // database for this user.
+    uuid = const Uuid().v4();
+    await createOwner(Owner(id: uuid));
+    await prefs.setString(uuidPrefsKey, uuid);
+
+    // update all the horses to point at that owner
+    await transaction(() async {
+      await update(horses).write(HorsesCompanion(owner: Value(uuid)));
+      for (var data in horseGalleryData) {
+        await (update(horses)
+              ..where(
+                  (tbl) => tbl.registrationName.equals(data.registrationName)))
+            .write(HorsesCompanion(profilePhoto: Value(data.id)));
+      }
+    });
   }
 }

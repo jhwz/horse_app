@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:horse_app/state/db.dart';
 import 'package:horse_app/utils/utils.dart';
@@ -24,12 +25,20 @@ class HorseListItem extends StatelessWidget {
             const EdgeInsets.only(left: 8, right: 16, top: 0, bottom: 0),
         minVerticalPadding: 0,
         leading: SizedBox(
-          child: horse.photo != null
-              ? Image.memory(
-                  horse.photo!,
+          child: FutureBuilder(
+            future: db.getHorseProfilePicture(horse),
+            builder: (context, AsyncSnapshot<Uint8List?> snapshot) {
+              return const Center(child: CircularProgressIndicator());
+
+              if (snapshot.hasData && snapshot.data != null) {
+                return Image.memory(
+                  snapshot.data!,
                   fit: BoxFit.cover,
-                )
-              : const SizedBox(),
+                );
+              }
+              return const SizedBox();
+            },
+          ),
           width: 64,
           height: 64,
         ),

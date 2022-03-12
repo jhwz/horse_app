@@ -34,7 +34,7 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
     horse = widget.horse;
 
     form = FormGroup({
-      'photo': FormControl<Uint8List>(value: horse?.photo),
+      // 'photo': FormControl<Uint8List>(value: horse?.photo),
       'registrationName': FormControl<String>(
           validators: [Validators.required], value: horse?.registrationName),
       'registrationNumber':
@@ -222,7 +222,7 @@ class CreateHorseSubmitButton extends StatelessWidget {
 
                   final weight = f["weight"] as RangeValues;
                   var horse = Horse(
-                    photo: f['photo'],
+                    // photo: f['photo'],
                     registrationName: f['registrationName'],
                     registrationNumber: f['registrationNumber'],
                     name: f['name'],
