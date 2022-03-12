@@ -333,6 +333,7 @@ class AppDb extends _$AppDb {
     if (h.profilePhoto == null) {
       return null;
     }
+
     final data = await (select(horseGallery)
           ..whereSamePrimaryKey(
               HorseGalleryCompanion(id: Value(h.profilePhoto!))))
@@ -430,15 +431,20 @@ class AppDb extends _$AppDb {
         continue;
       }
       final registrationName = row.read<String>("registration_name");
-      horseGalleryData.add(HorseGalleryData(
-          id: horseGalleryData.length,
-          registrationName: registrationName,
-          photo: photo));
+      horseGalleryData.add(
+        HorseGalleryData(
+            id: horseGalleryData.length,
+            registrationName: registrationName,
+            photo: photo),
+      );
 
       await horseGallery.update().write(horseGalleryData.last);
     }
 
     print("loaded ${horseGalleryData.length} photos into horse gallery");
+
+    final all = await select(horseGallery).get();
+    print("length: ${all.length}");
 
     // Cast the owner and breeders columns to text type now
     // we are using UUIDs
