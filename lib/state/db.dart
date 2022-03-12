@@ -255,11 +255,7 @@ class AppDb extends _$AppDb {
         },
         beforeOpen: (details) async {
           if (details.wasCreated) {
-            // Add an empty owner entry to the
-            // database for this user.
-            uuid = const Uuid().v4();
-            await createOwner(Owner(id: uuid));
-            await prefs.setString(uuidPrefsKey, uuid);
+            await safeSetOwner();
           }
         },
       );
@@ -403,6 +399,18 @@ class AppDb extends _$AppDb {
   // MIGRATIONS
   // *******************
 
+  safeSetOwner() async {
+    // Add an empty owner entry to the
+    // database for this user.
+    if (!prefs.containsKey(uuidPrefsKey)) {
+      uuid = const Uuid().v4();
+      await prefs.setString(uuidPrefsKey, uuid);
+    }
+    if ((await getOwner(uuid)) == null) {
+      await createOwner(Owner(id: uuid));
+    }
+  }
+
   v1tov2(Migrator m) async {
     // Add the new tables
     await m.createTable(owners);
@@ -441,15 +449,7 @@ class AppDb extends _$AppDb {
       newColumns: [horses.minWeight, horses.maxWeight, horses.profilePhoto],
     ));
 
-    // Add an empty owner entry to the
-    // database for this user.
-    if (!prefs.containsKey(uuidPrefsKey)) {
-      uuid = const Uuid().v4();
-      await prefs.setString(uuidPrefsKey, uuid);
-    }
-    if ((await getOwner(uuid)) == null) {
-      await createOwner(Owner(id: uuid));
-    }
+    await safeSetOwner();
 
     // update all the horses to point at that owner
     await transaction(() async {
