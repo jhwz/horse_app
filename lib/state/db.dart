@@ -431,6 +431,7 @@ class AppDb extends _$AppDb {
         continue;
       }
       final registrationName = row.read<String>("registration_name");
+      print("registrationName: ${registrationName} - ${photo.length}");
       horseGalleryData.add(
         HorseGalleryData(
             id: horseGalleryData.length,
@@ -438,7 +439,7 @@ class AppDb extends _$AppDb {
             photo: photo),
       );
 
-      await horseGallery.update().write(horseGalleryData.last);
+      await update(horseGallery).write(horseGalleryData.last);
     }
 
     print("loaded ${horseGalleryData.length} photos into horse gallery");
