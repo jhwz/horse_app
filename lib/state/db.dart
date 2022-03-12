@@ -439,8 +439,7 @@ class AppDb extends _$AppDb {
             photo: photo),
       );
 
-      final numChanged =
-          await update(horseGallery).write(horseGalleryData.last);
+      final numChanged = await into(horseGallery).insert(horseGalleryData.last);
       print("$numChanged rows updated");
     }
 
