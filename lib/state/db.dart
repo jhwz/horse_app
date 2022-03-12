@@ -423,8 +423,9 @@ class AppDb extends _$AppDb {
     final rows =
         await customSelect("SELECT photo, registration_name FROM horses").get();
 
+    print("read ${rows.length} photos from horses table");
+
     List<HorseGalleryData> horseGalleryData = [];
-    int idx = 0;
     for (var row in rows) {
       final photo = row.read<Uint8List?>("photo");
       if (photo == null) {
@@ -432,11 +433,14 @@ class AppDb extends _$AppDb {
       }
       final registrationName = row.read<String>("registration_name");
       horseGalleryData.add(HorseGalleryData(
-          id: idx, registrationName: registrationName, photo: photo));
-      idx++;
+          id: horseGalleryData.length,
+          registrationName: registrationName,
+          photo: photo));
 
       await horseGallery.update().write(horseGalleryData.last);
     }
+
+    print("loaded ${horseGalleryData.length} photos into horse gallery");
 
     // Cast the owner and breeders columns to text type now
     // we are using UUIDs
@@ -450,6 +454,8 @@ class AppDb extends _$AppDb {
     ));
 
     await safeSetOwner();
+
+    print("horses table altered; updating owner and profile photos");
 
     // update all the horses to point at that owner
     await transaction(() async {
