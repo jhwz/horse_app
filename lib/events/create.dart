@@ -86,7 +86,7 @@ class _NewEventPageState extends State<NewEventPage> {
     if (_allHorses.isNotEmpty) {
       return true;
     }
-    var horses = await db.listHorses();
+    var horses = await db.listHorses(limit: 1000);
     setState(() {
       _allHorses = horses;
     });

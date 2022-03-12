@@ -4,6 +4,7 @@ import 'package:horse_app/horses/create.dart';
 import 'package:horse_app/horses/heat.dart';
 import 'package:horse_app/horses/notes.dart';
 import 'package:horse_app/horses/pedigree.dart';
+import 'package:horse_app/utils/gallery.dart';
 import 'package:horse_app/utils/utils.dart';
 
 import "../state/db.dart";
@@ -66,7 +67,7 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
               const SizedBox(height: 16),
               ListTile(
                 leading: const Icon(Icons.info_outline_rounded),
-                title: const Text('General Information'),
+                title: const Text('Profile'),
                 subtitle: const Text('Identification, sex, DOB and more'),
                 trailing: const Icon(Icons.keyboard_arrow_right_outlined),
                 onTap: () async {
@@ -119,6 +120,55 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => HorsePedigreePage(horse: horse),
+                    ),
+                  );
+                  if (next != null && next is Horse) {
+                    setState(() {
+                      horse = next;
+                    });
+                  }
+                },
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(4)),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.image),
+                title: const Text('Gallery'),
+                subtitle: const Text('Collection of photos'),
+                trailing: const Icon(Icons.keyboard_arrow_right_outlined),
+                onTap: () async {
+                  var next = await Navigator.push<Horse>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Gallery(
+                        fetch: (offset, limit) async {
+                          return (await db.getHorseImages(
+                                  registrationName: horse.registrationName,
+                                  limit: limit,
+                                  offset: offset))
+                              .map((e) => Photo(id: e.id, photo: e.photo))
+                              .toList();
+                        },
+                        onAdd: (data) async {
+                          final val = await db.addHorseImage(
+                            registrationName: horse.registrationName,
+                            photo: data,
+                          );
+                          return Photo(id: val.id, photo: val.photo);
+                        },
+                        onDelete: (int id) async {
+                          await db.removeHorseImage(id: id);
+                        },
+                        primary: horse.profilePhoto,
+                        onPrimaryChange: (id) async {
+                          await db.updateHorse(HorsesCompanion(
+                            registrationName:
+                                drift.Value(horse.registrationName),
+                            profilePhoto: drift.Value(id),
+                          ));
+                        },
+                      ),
                     ),
                   );
                   if (next != null && next is Horse) {

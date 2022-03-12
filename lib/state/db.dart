@@ -268,7 +268,7 @@ class AppDb extends _$AppDb {
   }
 
   updateHorse(Insertable<Horse> h) async {
-    await update(horses).replace(h);
+    await (update(horses)..whereSamePrimaryKey(h)).write(h);
   }
 
   deleteHorse(String registrationName) async {
@@ -292,7 +292,7 @@ class AppDb extends _$AppDb {
   }) async {
     Iterable<int?>? sexIter;
     if (sex != null) {
-      sexIter = List<int>.from(sex);
+      sexIter = sex.map((s) => s.index);
     }
 
     return (select(horses)
@@ -322,11 +322,33 @@ class AppDb extends _$AppDb {
         .get();
   }
 
-  Future<List<HorseGalleryData>> getHorseImages(String registrationName) async {
+  Future<List<HorseGalleryData>> getHorseImages({
+    required String registrationName,
+    int offset = 0,
+    int limit = 10,
+  }) async {
     final vals = await (select(horseGallery)
-          ..where((tbl) => tbl.registrationName.equals(registrationName)))
+          ..where((tbl) => tbl.registrationName.equals(registrationName))
+          ..limit(limit, offset: offset))
         .get();
     return vals;
+  }
+
+  Future<HorseGalleryData> addHorseImage({
+    required String registrationName,
+    required Uint8List photo,
+  }) async {
+    final val = await into(horseGallery).insertReturning(HorseGalleryCompanion(
+      registrationName: Value(registrationName),
+      photo: Value(photo),
+    ));
+    return val;
+  }
+
+  removeHorseImage({
+    required int id,
+  }) async {
+    await delete(horseGallery).delete(HorseGalleryCompanion(id: Value(id)));
   }
 
   Future<Uint8List?> getHorseProfilePicture(Horse h) async {

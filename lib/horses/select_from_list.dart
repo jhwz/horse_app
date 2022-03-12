@@ -58,6 +58,7 @@ class _SelectFromListState extends State<SelectFromList> {
         _pagingController.appendPage(horses, nextPageKey);
       }
     } catch (error) {
+      print(error);
       _pagingController.error = error;
     }
   }

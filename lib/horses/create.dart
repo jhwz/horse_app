@@ -78,8 +78,6 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  const LabelledDivider("Identification"),
-
                   Padding(
                     padding: _padding,
                     child: ReactiveTextField(
@@ -96,6 +94,7 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
                       formControlName: 'registrationNumber',
                       decoration: const InputDecoration(
                         labelText: 'Registration Number',
+                        hintText: "Enter Registration Number",
                       ),
                     ),
                   ),
@@ -112,7 +111,6 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
                   //
                   //
 
-                  const LabelledDivider("Details"),
                   Padding(
                     padding: _padding,
                     child: ReactiveDateTimePicker(
