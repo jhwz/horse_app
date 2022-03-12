@@ -28,7 +28,13 @@ class HorseListItem extends StatelessWidget {
           child: FutureBuilder(
             future: db.getHorseProfilePicture(horse),
             builder: (context, AsyncSnapshot<Uint8List?> snapshot) {
-              return const Center(child: CircularProgressIndicator());
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                  ),
+                );
+              }
 
               if (snapshot.hasData && snapshot.data != null) {
                 return Image.memory(
