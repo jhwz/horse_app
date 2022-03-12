@@ -48,7 +48,7 @@ class HorseListItem extends StatelessWidget {
           width: 64,
           height: 64,
         ),
-        title: Text(horse.displayName),
+        title: Text("horse.displayName ${horse.profilePhoto ?? "na"}"),
         subtitle: Text(
             '${horse.registrationName} - ${DateTime.now().difference(horse.dateOfBirth).inDays ~/ 365} years old'),
         isThreeLine: true,

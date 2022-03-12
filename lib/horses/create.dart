@@ -34,7 +34,6 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
     horse = widget.horse;
 
     form = FormGroup({
-      // 'photo': FormControl<Uint8List>(value: horse?.photo),
       'registrationName': FormControl<String>(
           validators: [Validators.required], value: horse?.registrationName),
       'registrationNumber':
@@ -79,25 +78,6 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  ReactiveImagePicker(
-                    formControlName: 'photo',
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.zero,
-                      filled: false,
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      disabledBorder: InputBorder.none,
-                    ),
-                    inputBuilder: (onPressed) => TextButton.icon(
-                      onPressed: onPressed,
-                      icon: const Icon(Icons.add),
-                      label: const Text('Set profile photo'),
-                    ),
-                  ),
-
-                  //
-                  //
-
                   const LabelledDivider("Identification"),
 
                   Padding(

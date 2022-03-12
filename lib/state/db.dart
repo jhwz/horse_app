@@ -423,8 +423,6 @@ class AppDb extends _$AppDb {
     final rows =
         await customSelect("SELECT photo, registration_name FROM horses").get();
 
-    print("read ${rows.length} photos from horses table");
-
     List<HorseGalleryData> horseGalleryData = [];
     for (var row in rows) {
       final photo = row.read<Uint8List?>("photo");
@@ -461,6 +459,7 @@ class AppDb extends _$AppDb {
     await transaction(() async {
       await update(horses).write(HorsesCompanion(owner: Value(uuid)));
       for (var data in horseGalleryData) {
+        print("update ${data.registrationName} to photo ${data.id}");
         await (update(horses)
               ..where(
                   (tbl) => tbl.registrationName.equals(data.registrationName)))
