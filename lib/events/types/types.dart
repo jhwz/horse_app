@@ -23,7 +23,6 @@ abstract class ET {
   static List<ET> types = [
     drench,
     miteTreatment,
-    //
     pregnancyScans,
     foaling,
   ];
@@ -32,7 +31,7 @@ abstract class ET {
   static List<String> typeFormatted = typeNames.map(formatStr).toList();
 
 // #####################
-  // Event interface
+// Event interface
 // #####################
 
 // type of the event, arbitrary string

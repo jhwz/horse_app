@@ -5,7 +5,11 @@ extension HorseHelpers on Horse {
   static const Duration heatDuration = Duration(days: 6);
   static const Duration postFoalingDuration = Duration(days: 7);
 
-  String get displayName => name == "" ? registrationName : name;
+  String get displayName => name != ""
+      ? name
+      : registrationName != null
+          ? registrationName!
+          : id;
 
   DateTime? nextHeatStart() {
     if (heatCycleStart == null) {

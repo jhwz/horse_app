@@ -50,7 +50,7 @@ class HorseListItem extends StatelessWidget {
         ),
         title: Text(horse.displayName),
         subtitle: Text(
-            '${horse.registrationName} - ${DateTime.now().difference(horse.dateOfBirth).inDays ~/ 365} years old'),
+            '${DateTime.now().difference(horse.dateOfBirth).inDays ~/ 365} years old'),
         isThreeLine: true,
         onTap: () => onTap(horse),
         trailing: trailing,

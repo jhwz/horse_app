@@ -2,7 +2,7 @@ import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:horse_app/horses/create.dart';
 import 'package:horse_app/horses/heat.dart';
-import 'package:horse_app/horses/notes.dart';
+import 'package:horse_app/utils/notes.dart';
 import 'package:horse_app/horses/pedigree.dart';
 import 'package:horse_app/utils/gallery.dart';
 import 'package:horse_app/utils/utils.dart';
@@ -40,7 +40,7 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
             onSelected: (String value) async {
               if (value == 'Delete') {
                 try {
-                  await db.deleteHorse(horse.registrationName);
+                  await db.deleteHorse(horse.id);
                   showSuccess(context, 'Deleted');
                   Navigator.pop(context);
                 } catch (e) {
@@ -144,7 +144,7 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                       builder: (context) => Gallery(
                         fetch: (offset, limit) async {
                           return (await db.getHorseImages(
-                                  registrationName: horse.registrationName,
+                                  horseID: horse.id,
                                   limit: limit,
                                   offset: offset))
                               .map((e) => Photo(id: e.id, photo: e.photo))
@@ -152,7 +152,7 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                         },
                         onAdd: (data) async {
                           final val = await db.addHorseImage(
-                            registrationName: horse.registrationName,
+                            horseID: horse.id,
                             photo: data,
                           );
                           return Photo(id: val.id, photo: val.photo);
@@ -163,8 +163,7 @@ class _HorseProfilePageState extends State<HorseProfilePage> {
                         primary: horse.profilePhoto,
                         onPrimaryChange: (id) async {
                           await db.updateHorse(HorsesCompanion(
-                            registrationName:
-                                drift.Value(horse.registrationName),
+                            id: drift.Value(horse.id),
                             profilePhoto: drift.Value(id),
                           ));
                         },

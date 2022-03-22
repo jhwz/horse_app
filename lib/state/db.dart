@@ -30,16 +30,19 @@ extension SexString on Sex {
 }
 
 class Horses extends Table {
+  // generated id
+  TextColumn get id => text()();
+
   // Registration name. Currently required but that restriction may
   // be removed soon.
-  TextColumn get registrationName => text()();
+  TextColumn get registrationName => text().nullable()();
 
   // Registration number as issued by a breed society.
   TextColumn get registrationNumber => text().nullable()();
 
   // Name of the horses sire or dam.
-  TextColumn get sireRegistrationName => text().nullable()();
-  TextColumn get damRegistrationName => text().nullable()();
+  TextColumn get sireID => text().nullable()();
+  TextColumn get damID => text().nullable()();
 
   // The paddock name of the horse, this will be used to display
   // the horse in the application
@@ -91,7 +94,7 @@ class Horses extends Table {
       text().nullable().customConstraint('NULLABLE REFERENCES owners(id)')();
 
   @override
-  Set<Column> get primaryKey => {registrationName};
+  Set<Column> get primaryKey => {id};
 }
 
 class Events extends Table {
@@ -103,8 +106,7 @@ class Events extends Table {
 
   // Each event applies to exactly one horse, this references the foriegn key
   // for the horse that applies to this event. This will always be non-null.
-  TextColumn get registrationName => text()
-      .customConstraint('NOT NULL REFERENCES horses(registration_name)')();
+  TextColumn get horseID => text()();
 
   // The time this event occurred at.
   DateTimeColumn get date => dateTime().clientDefault(() => DateTime.now())();
@@ -161,8 +163,7 @@ class HorseGallery extends Table {
 
   IntColumn get id => integer().autoIncrement()();
 
-  TextColumn get registrationName => text()
-      .customConstraint('NOT NULL REFERENCES horses(registration_name)')();
+  TextColumn get horseID => text()();
 
   // Optional blob containing the profile of the horse. May extend to having
   // a gallery of images for each horse.
@@ -192,7 +193,7 @@ class EventHorse extends Event {
           type: event.type,
           notes: event.notes,
           id: event.id,
-          registrationName: event.registrationName,
+          horseID: event.horseID,
           extra: event.extra,
         );
 }
@@ -271,15 +272,11 @@ class AppDb extends _$AppDb {
     await (update(horses)..whereSamePrimaryKey(h)).write(h);
   }
 
-  deleteHorse(String registrationName) async {
+  deleteHorse(String id) async {
     return transaction(() async {
-      await (delete(horses)
-            ..where((tbl) => tbl.registrationName.equals(registrationName)))
-          .go();
+      await (delete(horses)..where((tbl) => tbl.id.equals(id))).go();
 
-      await (delete(events)
-            ..where((tbl) => tbl.registrationName.equals(registrationName)))
-          .go();
+      await (delete(events)..where((tbl) => tbl.horseID.equals(id))).go();
     });
   }
 
@@ -308,38 +305,34 @@ class AppDb extends _$AppDb {
         .get();
   }
 
-  Future<Horse> getHorse(String registrationName) async {
-    return (select(horses)
-          ..where((tbl) => tbl.registrationName.equals(registrationName)))
-        .getSingle();
+  Future<Horse> getHorse(String id) async {
+    return (select(horses)..where((tbl) => tbl.id.equals(id))).getSingle();
   }
 
-  Future<List<Horse>> getHorseOffspring(String registrationName) async {
+  Future<List<Horse>> getHorseOffspring(String id) async {
     return (select(horses)
-          ..where((tbl) =>
-              tbl.sireRegistrationName.equals(registrationName) |
-              tbl.damRegistrationName.equals(registrationName)))
+          ..where((tbl) => tbl.sireID.equals(id) | tbl.damID.equals(id)))
         .get();
   }
 
   Future<List<HorseGalleryData>> getHorseImages({
-    required String registrationName,
+    required String horseID,
     int offset = 0,
     int limit = 10,
   }) async {
     final vals = await (select(horseGallery)
-          ..where((tbl) => tbl.registrationName.equals(registrationName))
+          ..where((tbl) => tbl.horseID.equals(horseID))
           ..limit(limit, offset: offset))
         .get();
     return vals;
   }
 
   Future<HorseGalleryData> addHorseImage({
-    required String registrationName,
+    required String horseID,
     required Uint8List photo,
   }) async {
     final val = await into(horseGallery).insertReturning(HorseGalleryCompanion(
-      registrationName: Value(registrationName),
+      horseID: Value(horseID),
       photo: Value(photo),
     ));
     return val;
@@ -377,16 +370,13 @@ class AppDb extends _$AppDb {
               // past events
               (tbl.date.isSmallerOrEqualValue(now)) &
               // where the filter matches some key fields
-              (tbl.registrationName.contains(filter) |
-                  tbl.type.contains(filter) |
-                  tbl.notes.contains(filter)))
+              (tbl.horseID.contains(filter) | tbl.type.contains(filter)))
           ..limit(limit, offset: offset)
           ..orderBy([
             (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)
           ]))
         .join([
-      leftOuterJoin(
-          horses, horses.registrationName.equalsExp(events.registrationName)),
+      leftOuterJoin(horses, horses.id.equalsExp(events.horseID)),
     ]);
 
     return eventQuery.map((row) {
@@ -443,32 +433,45 @@ class AppDb extends _$AppDb {
     // Get the existing photo from each horse and add it to
     // the horse gallery. Then get the id for each of those photos
     // and set them as the horse's photo.
-    final rows =
-        await customSelect("SELECT photo, registration_name FROM horses").get();
+    final rows = await customSelect(
+            "SELECT photo, registration_name, sire_registration_name, dam_registration_name FROM horses")
+        .get();
 
     List<HorseGalleryData> horseGalleryData = [];
+    Map<String, String> registrationToUUID = {};
+    Map<String, String?> uuidToSireRegistratioin = {};
+    Map<String, String?> uuidToDamRegistratioin = {};
+
     for (var row in rows) {
+      final newID = const Uuid().v4();
+      final registrationName = row.read<String>("registration_name");
+      registrationToUUID[registrationName] = newID;
+      uuidToSireRegistratioin[newID] =
+          row.read<String?>("sire_registration_name");
+      uuidToDamRegistratioin[newID] =
+          row.read<String?>("dam_registration_name");
       final photo = row.read<Uint8List?>("photo");
       if (photo == null) {
         continue;
       }
-      final registrationName = row.read<String>("registration_name");
-      print("registrationName: ${registrationName} - ${photo.length}");
       horseGalleryData.add(
         HorseGalleryData(
-            id: horseGalleryData.length,
-            registrationName: registrationName,
-            photo: photo),
+          id: horseGalleryData.length,
+          horseID: newID,
+          photo: photo,
+        ),
       );
-
-      final numChanged = await into(horseGallery).insert(horseGalleryData.last);
-      print("$numChanged rows updated");
+      await into(horseGallery).insert(horseGalleryData.last);
     }
 
-    print("loaded ${horseGalleryData.length} photos into horse gallery");
-
-    final all = await select(horseGallery).get();
-    print("length: ${all.length}");
+    final eventRows =
+        await customSelect("SELECT id, registration_name FROM events").get();
+    Map<int, String> eventToRegistration = {};
+    for (var row in rows) {
+      final eventID = row.read<int>("id");
+      final registrationName = row.read<String>("registration_name");
+      eventToRegistration[eventID] = registrationName;
+    }
 
     // Cast the owner and breeders columns to text type now
     // we are using UUIDs
@@ -478,23 +481,50 @@ class AppDb extends _$AppDb {
         horses.owner: horses.owner.cast<String>(),
         horses.breeder: horses.breeder.cast<String>(),
       },
-      newColumns: [horses.minWeight, horses.maxWeight, horses.profilePhoto],
+      newColumns: [
+        horses.id,
+        horses.minWeight,
+        horses.maxWeight,
+        horses.profilePhoto,
+        horses.sireID,
+        horses.damID,
+      ],
     ));
+
+    // update the events table to use UUIDs
+    await m.alterTable(TableMigration(events, newColumns: [events.horseID]));
 
     await safeSetOwner();
 
-    print("horses table altered; updating owner and profile photos");
-
-    // update all the horses to point at that owner
     await transaction(() async {
-      await update(horses).write(HorsesCompanion(owner: Value(uuid)));
-      for (var data in horseGalleryData) {
-        print("update ${data.registrationName} to photo ${data.id}");
-        await (update(horses)
-              ..where(
-                  (tbl) => tbl.registrationName.equals(data.registrationName)))
-            .write(HorsesCompanion(profilePhoto: Value(data.id)));
-      }
+      // update the horses table and the events table
+      registrationToUUID.forEach((reg, horseUUID) async {
+        Value<int> profilePhotoValue = const Value.absent();
+        final galleryData = horseGalleryData
+            .where((data) => data.horseID == horseUUID)
+            .toList();
+        if (galleryData.isNotEmpty) {
+          profilePhotoValue = Value(galleryData.first.id);
+        }
+
+        await (update(horses)..where((tbl) => tbl.registrationName.equals(reg)))
+            .write(HorsesCompanion(
+                id: Value(horseUUID),
+                minWeight: const Value(0),
+                maxWeight: const Value(0),
+                sireID: Value.ofNullable(uuidToSireRegistratioin[horseUUID]),
+                damID: Value.ofNullable(uuidToDamRegistratioin[horseUUID]),
+                profilePhoto: profilePhotoValue,
+                owner: Value(uuid)));
+      });
+
+      // update the events table
+      eventToRegistration.forEach((eventID, registrationName) async {
+        await (update(events)..where((tbl) => tbl.id.equals(eventID))).write(
+            EventsCompanion(
+                id: Value(eventID),
+                horseID: Value(registrationToUUID[registrationName]!)));
+      });
     });
   }
 }

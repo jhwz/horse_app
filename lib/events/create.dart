@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'dart:math';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:horse_app/events/types/noop.dart';
 import 'package:horse_app/events/types/types.dart';
 import 'package:horse_app/notifications.dart';
 import 'package:horse_app/utils/icon_text.dart';
+import 'package:horse_app/utils/notes.dart';
 import 'package:reactive_date_time_picker/reactive_date_time_picker.dart';
 
 import 'package:reactive_forms/reactive_forms.dart';
@@ -15,37 +17,24 @@ import 'package:reactive_forms/reactive_forms.dart';
 import '../utils/utils.dart';
 import "../state/db.dart";
 
-class NewEventPage extends StatefulWidget {
-  const NewEventPage({Key? key}) : super(key: key);
-
-  @override
-  State<StatefulWidget> createState() => _NewEventPageState();
-}
-
-class _NewEventPageState extends State<NewEventPage> {
-  static const String _title = 'New Event';
-  int _index = 0;
-  ET event = NoopEvent("noEvent");
-  final List<Horse> _horses = [];
-  List<Horse> _allHorses = [];
-  bool _selectAllHorses = false;
-
-  FormGroup form = FormGroup({});
-  Widget? widgetsForForm;
-
-  Future<void> _createEvent() async {
-    if (_horses.isNotEmpty) {
+Future<void> _createEvent({
+  required BuildContext context,
+  required FormGroup form,
+  required List<Horse> horses,
+  required ET event,
+  required String notes,
+}) async {
+  try {
+    if (horses.isNotEmpty) {
       Map<String, dynamic> map = Map.from(form.value);
       final eventTime = map["date"] as DateTime;
-      final notes = map["notes"] is String ? map["notes"] as String : null;
       map.remove("date");
-      map.remove("notes");
 
       // create a unique event for each horse
-      List<EventsCompanion> events = _horses
+      List<EventsCompanion> events = horses
           .map((h) => EventsCompanion(
                 date: Value(eventTime),
-                registrationName: Value(h.registrationName),
+                horseID: Value(h.id),
                 type: Value(event.type),
                 notes: Value(notes),
                 extra: Value(map),
@@ -56,7 +45,7 @@ class _NewEventPageState extends State<NewEventPage> {
       await Future.wait(events.map((e) => db.createEvent(e)));
 
       // if this is a special event, create some actions from it.
-      for (var h in _horses) {
+      for (var h in horses) {
         try {
           event.onCreate(h);
         } catch (e) {
@@ -79,8 +68,33 @@ class _NewEventPageState extends State<NewEventPage> {
         }
       }();
     }
-    Navigator.pop(context);
+    showInfo(context, "Event created");
+  } catch (e) {
+    showError(context, "Failed to create event; something went wrong");
   }
+  Navigator.pop(context);
+}
+
+class NewEventPage extends StatefulWidget {
+  const NewEventPage({Key? key}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() => _NewEventPageState();
+}
+
+class _NewEventPageState extends State<NewEventPage> {
+  static const String _title = 'New Event';
+  int _index = 0;
+  ET event = NoopEvent("noEvent");
+  final List<Horse> _horses = [];
+  List<Horse> _allHorses = [];
+  bool _selectAllHorses = false;
+  String _notes = "";
+
+  FormGroup form = FormGroup({
+    'date': FormControl<DateTime>(value: DateTime.now()),
+  });
+  List<Widget>? widgetsForForm;
 
   Future<bool> _loadHorses() async {
     if (_allHorses.isNotEmpty) {
@@ -94,42 +108,7 @@ class _NewEventPageState extends State<NewEventPage> {
   }
 
   void _constructForm(ET event) {
-    Map<String, AbstractControl<dynamic>> controls = {
-      'notes': FormControl<String>(),
-      'date': FormControl<DateTime>(value: DateTime.now()),
-      ...event.fields(null),
-    };
-    List<Widget> children = [
-      ReactiveDateTimePicker(
-        formControlName: 'date',
-        type: ReactiveDatePickerFieldType.dateTime,
-        timePickerEntryMode: TimePickerEntryMode.input,
-        decoration: const InputDecoration(
-          labelText: 'Time of event (defaults to now)',
-        ),
-      ),
-      ReactiveTextField(
-        formControlName: 'notes',
-        maxLines: 5,
-        decoration: const InputDecoration(
-          labelText: 'Event notes (optional)',
-        ),
-      ),
-      ...event.formFields(),
-    ];
-
-    form = FormGroup(controls);
-
-    widgetsForForm = ReactiveForm(
-      formGroup: form,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: children
-            .map((w) =>
-                Padding(padding: const EdgeInsets.only(top: 8), child: w))
-            .toList(),
-      ),
-    );
+    form.addAll({...event.fields(null)});
   }
 
   @override
@@ -154,11 +133,22 @@ class _NewEventPageState extends State<NewEventPage> {
               ),
             )
           : _index == 2
-              ? ReactiveForm(
-                  formGroup: form,
-                  child: CreateEventSubmitButton(
-                    formGroup: form,
-                    createEvent: _createEvent,
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 24.0),
+                  child: ElevatedButton(
+                    onPressed: !form.valid
+                        ? null
+                        : () => _createEvent(
+                              context: context,
+                              form: form,
+                              event: event,
+                              horses: _horses,
+                              notes: _notes,
+                            ),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12.0),
+                      child: Text('Create Event'),
+                    ),
                   ),
                 )
               : null,
@@ -238,9 +228,7 @@ class _NewEventPageState extends State<NewEventPage> {
                                     ),
                                   ),
                                   child: CheckboxListTile(
-                                    value: _horses.any((h2) =>
-                                        h2.registrationName ==
-                                        h.registrationName),
+                                    value: _horses.any((h2) => h2.id == h.id),
                                     title: Text(h.name),
                                     onChanged: (bool? checked) {
                                       setState(() {
@@ -252,9 +240,8 @@ class _NewEventPageState extends State<NewEventPage> {
                                         if (checked == true) {
                                           _horses.add(h);
                                         } else {
-                                          _horses.removeWhere((h2) =>
-                                              h2.registrationName ==
-                                              h.registrationName);
+                                          _horses.removeWhere(
+                                              (h2) => h2.id == h.id);
                                         }
                                       });
                                     },
@@ -282,7 +269,54 @@ class _NewEventPageState extends State<NewEventPage> {
                     ? StepState.complete
                     : StepState.disabled,
             title: const Text('Details'),
-            content: widgetsForForm ?? const SizedBox.shrink(),
+            content: ReactiveForm(
+              formGroup: form,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ReactiveDateTimePicker(
+                    formControlName: 'date',
+                    type: ReactiveDatePickerFieldType.dateTime,
+                    timePickerEntryMode: TimePickerEntryMode.input,
+                    decoration: const InputDecoration(
+                      labelText: 'Time',
+                    ),
+                  ),
+                  ListTile(
+                    key: Key(_notes),
+                    leading: const Icon(Icons.note_alt_outlined),
+                    title: const Text('Notes'),
+                    subtitle: _notes != ""
+                        ? Text(
+                            _notes,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : const Text("Enter notes..."),
+                    trailing: const Icon(Icons.keyboard_arrow_right_outlined),
+                    onTap: () async {
+                      var newNotes = await Navigator.push<String>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditNotePage(
+                            note: _notes,
+                          ),
+                        ),
+                      );
+                      if (newNotes != null && newNotes is String) {
+                        setState(() {
+                          _notes = newNotes;
+                        });
+                      }
+                    },
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(4)),
+                    ),
+                  ),
+                  if (widgetsForForm != null) ...widgetsForForm!,
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -290,42 +324,9 @@ class _NewEventPageState extends State<NewEventPage> {
   }
 }
 
-class CreateEventSubmitButton extends StatelessWidget {
-  final FormGroup formGroup;
-  final Function createEvent;
-
-  const CreateEventSubmitButton({
-    Key? key,
-    required this.formGroup,
-    required this.createEvent,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final form = ReactiveForm.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 24.0),
-      child: ElevatedButton(
-        onPressed: !form!.valid
-            ? null
-            : () async {
-                // create the event
-                try {
-                  await createEvent();
-                  showInfo(context, 'Event created!');
-                } catch (e) {
-                  showError(context, "Failed to create event: ${e.toString()}");
-                }
-              },
-        child: const Padding(
-          padding: EdgeInsets.symmetric(vertical: 12.0),
-          child: Text('Create Event'),
-        ),
-      ),
-    );
-  }
-}
-
+// Provider that lists all of the available events for the
+// application. This is the union of our defined events and
+// the ones the users add.
 final allEvents = Provider<List<ET>>((ref) {
   final noops = ref.watch(customEventsProvider);
   List<ET> events = List.from(ET.types)

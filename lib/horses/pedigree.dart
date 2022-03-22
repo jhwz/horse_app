@@ -1,14 +1,10 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
-import 'package:horse_app/horses/list.dart';
 import 'package:horse_app/horses/list_item.dart';
 import 'package:horse_app/horses/select_from_list.dart';
 import 'package:horse_app/horses/single.dart';
 import 'package:horse_app/utils/labelled_divider.dart';
 import 'package:horse_app/utils/utils.dart';
-
-import 'package:reactive_forms/reactive_forms.dart';
-import 'package:reactive_date_time_picker/reactive_date_time_picker.dart';
 
 import "../state/db.dart";
 
@@ -31,10 +27,10 @@ class _HorsePedigreePage extends State<HorsePedigreePage> {
     horse = widget.horse;
   }
 
-  Future<Horse?> _tryGetHorse(String? registrationName) async {
-    if (registrationName == null) return null;
+  Future<Horse?> _tryGetHorse(String? id) async {
+    if (id == null) return null;
     try {
-      return await db.getHorse(registrationName);
+      return await db.getHorse(id);
     } catch (e) {
       return null;
     }
@@ -57,12 +53,12 @@ class _HorsePedigreePage extends State<HorsePedigreePage> {
             horse: horse,
             repr: "Sire",
             parentSex: const [Sex.stallion, Sex.gelding],
-            future: _tryGetHorse(horse.sireRegistrationName),
+            future: _tryGetHorse(horse.sireID),
             onUpdate: (newSire) {
               setState(() {
                 horse = horse.copyWith(
-                  sireRegistrationName: newSire != null
-                      ? drift.Value(newSire.registrationName)
+                  sireID: newSire != null
+                      ? drift.Value(newSire.sireID)
                       : const drift.Value(null),
                 );
                 handle(context, db.updateHorse(horse));
@@ -74,12 +70,12 @@ class _HorsePedigreePage extends State<HorsePedigreePage> {
             horse: horse,
             repr: "Dam",
             parentSex: const [Sex.mare],
-            future: _tryGetHorse(horse.damRegistrationName),
+            future: _tryGetHorse(horse.damID),
             onUpdate: (newDam) {
               setState(() {
                 horse = horse.copyWith(
-                  damRegistrationName: newDam != null
-                      ? drift.Value(newDam.registrationName)
+                  damID: newDam != null
+                      ? drift.Value(newDam.damID)
                       : const drift.Value(null),
                 );
                 handle(context, db.updateHorse(horse));
@@ -87,7 +83,7 @@ class _HorsePedigreePage extends State<HorsePedigreePage> {
             },
           ),
           FutureBuilder<List<Horse>>(
-            future: db.getHorseOffspring(horse.registrationName),
+            future: db.getHorseOffspring(horse.id),
             builder: (context, snapshot) {
               Widget inColumn(Widget w) {
                 return Column(

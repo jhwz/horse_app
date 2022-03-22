@@ -10,14 +10,14 @@ part of 'db.dart';
 class Event extends DataClass implements Insertable<Event> {
   final int id;
   final String type;
-  final String registrationName;
+  final String horseID;
   final DateTime date;
   final String? notes;
   final Map<String, dynamic>? extra;
   Event(
       {required this.id,
       required this.type,
-      required this.registrationName,
+      required this.horseID,
       required this.date,
       this.notes,
       this.extra});
@@ -28,8 +28,8 @@ class Event extends DataClass implements Insertable<Event> {
           .mapFromDatabaseResponse(data['${effectivePrefix}id'])!,
       type: const StringType()
           .mapFromDatabaseResponse(data['${effectivePrefix}type'])!,
-      registrationName: const StringType().mapFromDatabaseResponse(
-          data['${effectivePrefix}registration_name'])!,
+      horseID: const StringType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}horse_i_d'])!,
       date: const DateTimeType()
           .mapFromDatabaseResponse(data['${effectivePrefix}date'])!,
       notes: const StringType()
@@ -43,7 +43,7 @@ class Event extends DataClass implements Insertable<Event> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['type'] = Variable<String>(type);
-    map['registration_name'] = Variable<String>(registrationName);
+    map['horse_i_d'] = Variable<String>(horseID);
     map['date'] = Variable<DateTime>(date);
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String?>(notes);
@@ -59,7 +59,7 @@ class Event extends DataClass implements Insertable<Event> {
     return EventsCompanion(
       id: Value(id),
       type: Value(type),
-      registrationName: Value(registrationName),
+      horseID: Value(horseID),
       date: Value(date),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
@@ -74,7 +74,7 @@ class Event extends DataClass implements Insertable<Event> {
     return Event(
       id: serializer.fromJson<int>(json['id']),
       type: serializer.fromJson<String>(json['type']),
-      registrationName: serializer.fromJson<String>(json['registrationName']),
+      horseID: serializer.fromJson<String>(json['horseID']),
       date: serializer.fromJson<DateTime>(json['date']),
       notes: serializer.fromJson<String?>(json['notes']),
       extra: serializer.fromJson<Map<String, dynamic>?>(json['extra']),
@@ -86,7 +86,7 @@ class Event extends DataClass implements Insertable<Event> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'type': serializer.toJson<String>(type),
-      'registrationName': serializer.toJson<String>(registrationName),
+      'horseID': serializer.toJson<String>(horseID),
       'date': serializer.toJson<DateTime>(date),
       'notes': serializer.toJson<String?>(notes),
       'extra': serializer.toJson<Map<String, dynamic>?>(extra),
@@ -96,14 +96,14 @@ class Event extends DataClass implements Insertable<Event> {
   Event copyWith(
           {int? id,
           String? type,
-          String? registrationName,
+          String? horseID,
           DateTime? date,
           Value<String?> notes = const Value.absent(),
           Value<Map<String, dynamic>?> extra = const Value.absent()}) =>
       Event(
         id: id ?? this.id,
         type: type ?? this.type,
-        registrationName: registrationName ?? this.registrationName,
+        horseID: horseID ?? this.horseID,
         date: date ?? this.date,
         notes: notes.present ? notes.value : this.notes,
         extra: extra.present ? extra.value : this.extra,
@@ -113,7 +113,7 @@ class Event extends DataClass implements Insertable<Event> {
     return (StringBuffer('Event(')
           ..write('id: $id, ')
           ..write('type: $type, ')
-          ..write('registrationName: $registrationName, ')
+          ..write('horseID: $horseID, ')
           ..write('date: $date, ')
           ..write('notes: $notes, ')
           ..write('extra: $extra')
@@ -122,15 +122,14 @@ class Event extends DataClass implements Insertable<Event> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, type, registrationName, date, notes, extra);
+  int get hashCode => Object.hash(id, type, horseID, date, notes, extra);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Event &&
           other.id == this.id &&
           other.type == this.type &&
-          other.registrationName == this.registrationName &&
+          other.horseID == this.horseID &&
           other.date == this.date &&
           other.notes == this.notes &&
           other.extra == this.extra);
@@ -139,14 +138,14 @@ class Event extends DataClass implements Insertable<Event> {
 class EventsCompanion extends UpdateCompanion<Event> {
   final Value<int> id;
   final Value<String> type;
-  final Value<String> registrationName;
+  final Value<String> horseID;
   final Value<DateTime> date;
   final Value<String?> notes;
   final Value<Map<String, dynamic>?> extra;
   const EventsCompanion({
     this.id = const Value.absent(),
     this.type = const Value.absent(),
-    this.registrationName = const Value.absent(),
+    this.horseID = const Value.absent(),
     this.date = const Value.absent(),
     this.notes = const Value.absent(),
     this.extra = const Value.absent(),
@@ -154,16 +153,16 @@ class EventsCompanion extends UpdateCompanion<Event> {
   EventsCompanion.insert({
     this.id = const Value.absent(),
     required String type,
-    required String registrationName,
+    required String horseID,
     this.date = const Value.absent(),
     this.notes = const Value.absent(),
     this.extra = const Value.absent(),
   })  : type = Value(type),
-        registrationName = Value(registrationName);
+        horseID = Value(horseID);
   static Insertable<Event> custom({
     Expression<int>? id,
     Expression<String>? type,
-    Expression<String>? registrationName,
+    Expression<String>? horseID,
     Expression<DateTime>? date,
     Expression<String?>? notes,
     Expression<Map<String, dynamic>?>? extra,
@@ -171,7 +170,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (type != null) 'type': type,
-      if (registrationName != null) 'registration_name': registrationName,
+      if (horseID != null) 'horse_i_d': horseID,
       if (date != null) 'date': date,
       if (notes != null) 'notes': notes,
       if (extra != null) 'extra': extra,
@@ -181,14 +180,14 @@ class EventsCompanion extends UpdateCompanion<Event> {
   EventsCompanion copyWith(
       {Value<int>? id,
       Value<String>? type,
-      Value<String>? registrationName,
+      Value<String>? horseID,
       Value<DateTime>? date,
       Value<String?>? notes,
       Value<Map<String, dynamic>?>? extra}) {
     return EventsCompanion(
       id: id ?? this.id,
       type: type ?? this.type,
-      registrationName: registrationName ?? this.registrationName,
+      horseID: horseID ?? this.horseID,
       date: date ?? this.date,
       notes: notes ?? this.notes,
       extra: extra ?? this.extra,
@@ -204,8 +203,8 @@ class EventsCompanion extends UpdateCompanion<Event> {
     if (type.present) {
       map['type'] = Variable<String>(type.value);
     }
-    if (registrationName.present) {
-      map['registration_name'] = Variable<String>(registrationName.value);
+    if (horseID.present) {
+      map['horse_i_d'] = Variable<String>(horseID.value);
     }
     if (date.present) {
       map['date'] = Variable<DateTime>(date.value);
@@ -225,7 +224,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
     return (StringBuffer('EventsCompanion(')
           ..write('id: $id, ')
           ..write('type: $type, ')
-          ..write('registrationName: $registrationName, ')
+          ..write('horseID: $horseID, ')
           ..write('date: $date, ')
           ..write('notes: $notes, ')
           ..write('extra: $extra')
@@ -251,14 +250,11 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
   late final GeneratedColumn<String?> type = GeneratedColumn<String?>(
       'type', aliasedName, false,
       type: const StringType(), requiredDuringInsert: true);
-  final VerificationMeta _registrationNameMeta =
-      const VerificationMeta('registrationName');
+  final VerificationMeta _horseIDMeta = const VerificationMeta('horseID');
   @override
-  late final GeneratedColumn<String?> registrationName =
-      GeneratedColumn<String?>('registration_name', aliasedName, false,
-          type: const StringType(),
-          requiredDuringInsert: true,
-          $customConstraints: 'NOT NULL REFERENCES horses(registration_name)');
+  late final GeneratedColumn<String?> horseID = GeneratedColumn<String?>(
+      'horse_i_d', aliasedName, false,
+      type: const StringType(), requiredDuringInsert: true);
   final VerificationMeta _dateMeta = const VerificationMeta('date');
   @override
   late final GeneratedColumn<DateTime?> date = GeneratedColumn<DateTime?>(
@@ -278,8 +274,7 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
               type: const StringType(), requiredDuringInsert: false)
           .withConverter<Map<String, dynamic>>($EventsTable.$converter0);
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, type, registrationName, date, notes, extra];
+  List<GeneratedColumn> get $columns => [id, type, horseID, date, notes, extra];
   @override
   String get aliasedName => _alias ?? 'events';
   @override
@@ -298,13 +293,11 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
     } else if (isInserting) {
       context.missing(_typeMeta);
     }
-    if (data.containsKey('registration_name')) {
-      context.handle(
-          _registrationNameMeta,
-          registrationName.isAcceptableOrUnknown(
-              data['registration_name']!, _registrationNameMeta));
+    if (data.containsKey('horse_i_d')) {
+      context.handle(_horseIDMeta,
+          horseID.isAcceptableOrUnknown(data['horse_i_d']!, _horseIDMeta));
     } else if (isInserting) {
-      context.missing(_registrationNameMeta);
+      context.missing(_horseIDMeta);
     }
     if (data.containsKey('date')) {
       context.handle(
@@ -336,10 +329,11 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
 }
 
 class Horse extends DataClass implements Insertable<Horse> {
-  final String registrationName;
+  final String id;
+  final String? registrationName;
   final String? registrationNumber;
-  final String? sireRegistrationName;
-  final String? damRegistrationName;
+  final String? sireID;
+  final String? damID;
   final String name;
   final Sex sex;
   final DateTime dateOfBirth;
@@ -352,10 +346,11 @@ class Horse extends DataClass implements Insertable<Horse> {
   final String? owner;
   final String? breeder;
   Horse(
-      {required this.registrationName,
+      {required this.id,
+      this.registrationName,
       this.registrationNumber,
-      this.sireRegistrationName,
-      this.damRegistrationName,
+      this.sireID,
+      this.damID,
       required this.name,
       required this.sex,
       required this.dateOfBirth,
@@ -370,14 +365,16 @@ class Horse extends DataClass implements Insertable<Horse> {
   factory Horse.fromData(Map<String, dynamic> data, {String? prefix}) {
     final effectivePrefix = prefix ?? '';
     return Horse(
-      registrationName: const StringType().mapFromDatabaseResponse(
-          data['${effectivePrefix}registration_name'])!,
+      id: const StringType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}id'])!,
+      registrationName: const StringType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}registration_name']),
       registrationNumber: const StringType().mapFromDatabaseResponse(
           data['${effectivePrefix}registration_number']),
-      sireRegistrationName: const StringType().mapFromDatabaseResponse(
-          data['${effectivePrefix}sire_registration_name']),
-      damRegistrationName: const StringType().mapFromDatabaseResponse(
-          data['${effectivePrefix}dam_registration_name']),
+      sireID: const StringType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}sire_i_d']),
+      damID: const StringType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}dam_i_d']),
       name: const StringType()
           .mapFromDatabaseResponse(data['${effectivePrefix}name'])!,
       sex: $HorsesTable.$converter0.mapToDart(const IntType()
@@ -405,15 +402,18 @@ class Horse extends DataClass implements Insertable<Horse> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['registration_name'] = Variable<String>(registrationName);
+    map['id'] = Variable<String>(id);
+    if (!nullToAbsent || registrationName != null) {
+      map['registration_name'] = Variable<String?>(registrationName);
+    }
     if (!nullToAbsent || registrationNumber != null) {
       map['registration_number'] = Variable<String?>(registrationNumber);
     }
-    if (!nullToAbsent || sireRegistrationName != null) {
-      map['sire_registration_name'] = Variable<String?>(sireRegistrationName);
+    if (!nullToAbsent || sireID != null) {
+      map['sire_i_d'] = Variable<String?>(sireID);
     }
-    if (!nullToAbsent || damRegistrationName != null) {
-      map['dam_registration_name'] = Variable<String?>(damRegistrationName);
+    if (!nullToAbsent || damID != null) {
+      map['dam_i_d'] = Variable<String?>(damID);
     }
     map['name'] = Variable<String>(name);
     {
@@ -450,16 +450,17 @@ class Horse extends DataClass implements Insertable<Horse> {
 
   HorsesCompanion toCompanion(bool nullToAbsent) {
     return HorsesCompanion(
-      registrationName: Value(registrationName),
+      id: Value(id),
+      registrationName: registrationName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(registrationName),
       registrationNumber: registrationNumber == null && nullToAbsent
           ? const Value.absent()
           : Value(registrationNumber),
-      sireRegistrationName: sireRegistrationName == null && nullToAbsent
-          ? const Value.absent()
-          : Value(sireRegistrationName),
-      damRegistrationName: damRegistrationName == null && nullToAbsent
-          ? const Value.absent()
-          : Value(damRegistrationName),
+      sireID:
+          sireID == null && nullToAbsent ? const Value.absent() : Value(sireID),
+      damID:
+          damID == null && nullToAbsent ? const Value.absent() : Value(damID),
       name: Value(name),
       sex: Value(sex),
       dateOfBirth: Value(dateOfBirth),
@@ -491,13 +492,12 @@ class Horse extends DataClass implements Insertable<Horse> {
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Horse(
-      registrationName: serializer.fromJson<String>(json['registrationName']),
+      id: serializer.fromJson<String>(json['id']),
+      registrationName: serializer.fromJson<String?>(json['registrationName']),
       registrationNumber:
           serializer.fromJson<String?>(json['registrationNumber']),
-      sireRegistrationName:
-          serializer.fromJson<String?>(json['sireRegistrationName']),
-      damRegistrationName:
-          serializer.fromJson<String?>(json['damRegistrationName']),
+      sireID: serializer.fromJson<String?>(json['sireID']),
+      damID: serializer.fromJson<String?>(json['damID']),
       name: serializer.fromJson<String>(json['name']),
       sex: serializer.fromJson<Sex>(json['sex']),
       dateOfBirth: serializer.fromJson<DateTime>(json['dateOfBirth']),
@@ -515,10 +515,11 @@ class Horse extends DataClass implements Insertable<Horse> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'registrationName': serializer.toJson<String>(registrationName),
+      'id': serializer.toJson<String>(id),
+      'registrationName': serializer.toJson<String?>(registrationName),
       'registrationNumber': serializer.toJson<String?>(registrationNumber),
-      'sireRegistrationName': serializer.toJson<String?>(sireRegistrationName),
-      'damRegistrationName': serializer.toJson<String?>(damRegistrationName),
+      'sireID': serializer.toJson<String?>(sireID),
+      'damID': serializer.toJson<String?>(damID),
       'name': serializer.toJson<String>(name),
       'sex': serializer.toJson<Sex>(sex),
       'dateOfBirth': serializer.toJson<DateTime>(dateOfBirth),
@@ -534,10 +535,11 @@ class Horse extends DataClass implements Insertable<Horse> {
   }
 
   Horse copyWith(
-          {String? registrationName,
+          {String? id,
+          Value<String?> registrationName = const Value.absent(),
           Value<String?> registrationNumber = const Value.absent(),
-          Value<String?> sireRegistrationName = const Value.absent(),
-          Value<String?> damRegistrationName = const Value.absent(),
+          Value<String?> sireID = const Value.absent(),
+          Value<String?> damID = const Value.absent(),
           String? name,
           Sex? sex,
           DateTime? dateOfBirth,
@@ -550,16 +552,15 @@ class Horse extends DataClass implements Insertable<Horse> {
           Value<String?> owner = const Value.absent(),
           Value<String?> breeder = const Value.absent()}) =>
       Horse(
-        registrationName: registrationName ?? this.registrationName,
+        id: id ?? this.id,
+        registrationName: registrationName.present
+            ? registrationName.value
+            : this.registrationName,
         registrationNumber: registrationNumber.present
             ? registrationNumber.value
             : this.registrationNumber,
-        sireRegistrationName: sireRegistrationName.present
-            ? sireRegistrationName.value
-            : this.sireRegistrationName,
-        damRegistrationName: damRegistrationName.present
-            ? damRegistrationName.value
-            : this.damRegistrationName,
+        sireID: sireID.present ? sireID.value : this.sireID,
+        damID: damID.present ? damID.value : this.damID,
         name: name ?? this.name,
         sex: sex ?? this.sex,
         dateOfBirth: dateOfBirth ?? this.dateOfBirth,
@@ -577,10 +578,11 @@ class Horse extends DataClass implements Insertable<Horse> {
   @override
   String toString() {
     return (StringBuffer('Horse(')
+          ..write('id: $id, ')
           ..write('registrationName: $registrationName, ')
           ..write('registrationNumber: $registrationNumber, ')
-          ..write('sireRegistrationName: $sireRegistrationName, ')
-          ..write('damRegistrationName: $damRegistrationName, ')
+          ..write('sireID: $sireID, ')
+          ..write('damID: $damID, ')
           ..write('name: $name, ')
           ..write('sex: $sex, ')
           ..write('dateOfBirth: $dateOfBirth, ')
@@ -598,10 +600,11 @@ class Horse extends DataClass implements Insertable<Horse> {
 
   @override
   int get hashCode => Object.hash(
+      id,
       registrationName,
       registrationNumber,
-      sireRegistrationName,
-      damRegistrationName,
+      sireID,
+      damID,
       name,
       sex,
       dateOfBirth,
@@ -617,10 +620,11 @@ class Horse extends DataClass implements Insertable<Horse> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Horse &&
+          other.id == this.id &&
           other.registrationName == this.registrationName &&
           other.registrationNumber == this.registrationNumber &&
-          other.sireRegistrationName == this.sireRegistrationName &&
-          other.damRegistrationName == this.damRegistrationName &&
+          other.sireID == this.sireID &&
+          other.damID == this.damID &&
           other.name == this.name &&
           other.sex == this.sex &&
           other.dateOfBirth == this.dateOfBirth &&
@@ -635,10 +639,11 @@ class Horse extends DataClass implements Insertable<Horse> {
 }
 
 class HorsesCompanion extends UpdateCompanion<Horse> {
-  final Value<String> registrationName;
+  final Value<String> id;
+  final Value<String?> registrationName;
   final Value<String?> registrationNumber;
-  final Value<String?> sireRegistrationName;
-  final Value<String?> damRegistrationName;
+  final Value<String?> sireID;
+  final Value<String?> damID;
   final Value<String> name;
   final Value<Sex> sex;
   final Value<DateTime> dateOfBirth;
@@ -651,10 +656,11 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
   final Value<String?> owner;
   final Value<String?> breeder;
   const HorsesCompanion({
+    this.id = const Value.absent(),
     this.registrationName = const Value.absent(),
     this.registrationNumber = const Value.absent(),
-    this.sireRegistrationName = const Value.absent(),
-    this.damRegistrationName = const Value.absent(),
+    this.sireID = const Value.absent(),
+    this.damID = const Value.absent(),
     this.name = const Value.absent(),
     this.sex = const Value.absent(),
     this.dateOfBirth = const Value.absent(),
@@ -668,10 +674,11 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
     this.breeder = const Value.absent(),
   });
   HorsesCompanion.insert({
-    required String registrationName,
+    required String id,
+    this.registrationName = const Value.absent(),
     this.registrationNumber = const Value.absent(),
-    this.sireRegistrationName = const Value.absent(),
-    this.damRegistrationName = const Value.absent(),
+    this.sireID = const Value.absent(),
+    this.damID = const Value.absent(),
     required String name,
     required Sex sex,
     required DateTime dateOfBirth,
@@ -683,15 +690,16 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
     this.notes = const Value.absent(),
     this.owner = const Value.absent(),
     this.breeder = const Value.absent(),
-  })  : registrationName = Value(registrationName),
+  })  : id = Value(id),
         name = Value(name),
         sex = Value(sex),
         dateOfBirth = Value(dateOfBirth);
   static Insertable<Horse> custom({
-    Expression<String>? registrationName,
+    Expression<String>? id,
+    Expression<String?>? registrationName,
     Expression<String?>? registrationNumber,
-    Expression<String?>? sireRegistrationName,
-    Expression<String?>? damRegistrationName,
+    Expression<String?>? sireID,
+    Expression<String?>? damID,
     Expression<String>? name,
     Expression<Sex>? sex,
     Expression<DateTime>? dateOfBirth,
@@ -705,12 +713,11 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
     Expression<String?>? breeder,
   }) {
     return RawValuesInsertable({
+      if (id != null) 'id': id,
       if (registrationName != null) 'registration_name': registrationName,
       if (registrationNumber != null) 'registration_number': registrationNumber,
-      if (sireRegistrationName != null)
-        'sire_registration_name': sireRegistrationName,
-      if (damRegistrationName != null)
-        'dam_registration_name': damRegistrationName,
+      if (sireID != null) 'sire_i_d': sireID,
+      if (damID != null) 'dam_i_d': damID,
       if (name != null) 'name': name,
       if (sex != null) 'sex': sex,
       if (dateOfBirth != null) 'date_of_birth': dateOfBirth,
@@ -726,10 +733,11 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
   }
 
   HorsesCompanion copyWith(
-      {Value<String>? registrationName,
+      {Value<String>? id,
+      Value<String?>? registrationName,
       Value<String?>? registrationNumber,
-      Value<String?>? sireRegistrationName,
-      Value<String?>? damRegistrationName,
+      Value<String?>? sireID,
+      Value<String?>? damID,
       Value<String>? name,
       Value<Sex>? sex,
       Value<DateTime>? dateOfBirth,
@@ -742,10 +750,11 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
       Value<String?>? owner,
       Value<String?>? breeder}) {
     return HorsesCompanion(
+      id: id ?? this.id,
       registrationName: registrationName ?? this.registrationName,
       registrationNumber: registrationNumber ?? this.registrationNumber,
-      sireRegistrationName: sireRegistrationName ?? this.sireRegistrationName,
-      damRegistrationName: damRegistrationName ?? this.damRegistrationName,
+      sireID: sireID ?? this.sireID,
+      damID: damID ?? this.damID,
       name: name ?? this.name,
       sex: sex ?? this.sex,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
@@ -763,19 +772,20 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
     if (registrationName.present) {
-      map['registration_name'] = Variable<String>(registrationName.value);
+      map['registration_name'] = Variable<String?>(registrationName.value);
     }
     if (registrationNumber.present) {
       map['registration_number'] = Variable<String?>(registrationNumber.value);
     }
-    if (sireRegistrationName.present) {
-      map['sire_registration_name'] =
-          Variable<String?>(sireRegistrationName.value);
+    if (sireID.present) {
+      map['sire_i_d'] = Variable<String?>(sireID.value);
     }
-    if (damRegistrationName.present) {
-      map['dam_registration_name'] =
-          Variable<String?>(damRegistrationName.value);
+    if (damID.present) {
+      map['dam_i_d'] = Variable<String?>(damID.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -817,10 +827,11 @@ class HorsesCompanion extends UpdateCompanion<Horse> {
   @override
   String toString() {
     return (StringBuffer('HorsesCompanion(')
+          ..write('id: $id, ')
           ..write('registrationName: $registrationName, ')
           ..write('registrationNumber: $registrationNumber, ')
-          ..write('sireRegistrationName: $sireRegistrationName, ')
-          ..write('damRegistrationName: $damRegistrationName, ')
+          ..write('sireID: $sireID, ')
+          ..write('damID: $damID, ')
           ..write('name: $name, ')
           ..write('sex: $sex, ')
           ..write('dateOfBirth: $dateOfBirth, ')
@@ -842,30 +853,33 @@ class $HorsesTable extends Horses with TableInfo<$HorsesTable, Horse> {
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $HorsesTable(this.attachedDatabase, [this._alias]);
+  final VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String?> id = GeneratedColumn<String?>(
+      'id', aliasedName, false,
+      type: const StringType(), requiredDuringInsert: true);
   final VerificationMeta _registrationNameMeta =
       const VerificationMeta('registrationName');
   @override
   late final GeneratedColumn<String?> registrationName =
-      GeneratedColumn<String?>('registration_name', aliasedName, false,
-          type: const StringType(), requiredDuringInsert: true);
+      GeneratedColumn<String?>('registration_name', aliasedName, true,
+          type: const StringType(), requiredDuringInsert: false);
   final VerificationMeta _registrationNumberMeta =
       const VerificationMeta('registrationNumber');
   @override
   late final GeneratedColumn<String?> registrationNumber =
       GeneratedColumn<String?>('registration_number', aliasedName, true,
           type: const StringType(), requiredDuringInsert: false);
-  final VerificationMeta _sireRegistrationNameMeta =
-      const VerificationMeta('sireRegistrationName');
+  final VerificationMeta _sireIDMeta = const VerificationMeta('sireID');
   @override
-  late final GeneratedColumn<String?> sireRegistrationName =
-      GeneratedColumn<String?>('sire_registration_name', aliasedName, true,
-          type: const StringType(), requiredDuringInsert: false);
-  final VerificationMeta _damRegistrationNameMeta =
-      const VerificationMeta('damRegistrationName');
+  late final GeneratedColumn<String?> sireID = GeneratedColumn<String?>(
+      'sire_i_d', aliasedName, true,
+      type: const StringType(), requiredDuringInsert: false);
+  final VerificationMeta _damIDMeta = const VerificationMeta('damID');
   @override
-  late final GeneratedColumn<String?> damRegistrationName =
-      GeneratedColumn<String?>('dam_registration_name', aliasedName, true,
-          type: const StringType(), requiredDuringInsert: false);
+  late final GeneratedColumn<String?> damID = GeneratedColumn<String?>(
+      'dam_i_d', aliasedName, true,
+      type: const StringType(), requiredDuringInsert: false);
   final VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String?> name = GeneratedColumn<String?>(
@@ -933,10 +947,11 @@ class $HorsesTable extends Horses with TableInfo<$HorsesTable, Horse> {
       $customConstraints: 'NULLABLE REFERENCES owners(id)');
   @override
   List<GeneratedColumn> get $columns => [
+        id,
         registrationName,
         registrationNumber,
-        sireRegistrationName,
-        damRegistrationName,
+        sireID,
+        damID,
         name,
         sex,
         dateOfBirth,
@@ -958,13 +973,16 @@ class $HorsesTable extends Horses with TableInfo<$HorsesTable, Horse> {
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
     if (data.containsKey('registration_name')) {
       context.handle(
           _registrationNameMeta,
           registrationName.isAcceptableOrUnknown(
               data['registration_name']!, _registrationNameMeta));
-    } else if (isInserting) {
-      context.missing(_registrationNameMeta);
     }
     if (data.containsKey('registration_number')) {
       context.handle(
@@ -972,17 +990,13 @@ class $HorsesTable extends Horses with TableInfo<$HorsesTable, Horse> {
           registrationNumber.isAcceptableOrUnknown(
               data['registration_number']!, _registrationNumberMeta));
     }
-    if (data.containsKey('sire_registration_name')) {
-      context.handle(
-          _sireRegistrationNameMeta,
-          sireRegistrationName.isAcceptableOrUnknown(
-              data['sire_registration_name']!, _sireRegistrationNameMeta));
+    if (data.containsKey('sire_i_d')) {
+      context.handle(_sireIDMeta,
+          sireID.isAcceptableOrUnknown(data['sire_i_d']!, _sireIDMeta));
     }
-    if (data.containsKey('dam_registration_name')) {
-      context.handle(
-          _damRegistrationNameMeta,
-          damRegistrationName.isAcceptableOrUnknown(
-              data['dam_registration_name']!, _damRegistrationNameMeta));
+    if (data.containsKey('dam_i_d')) {
+      context.handle(_damIDMeta,
+          damID.isAcceptableOrUnknown(data['dam_i_d']!, _damIDMeta));
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -1039,7 +1053,7 @@ class $HorsesTable extends Horses with TableInfo<$HorsesTable, Horse> {
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {registrationName};
+  Set<GeneratedColumn> get $primaryKey => {id};
   @override
   Horse map(Map<String, dynamic> data, {String? tablePrefix}) {
     return Horse.fromData(data,
@@ -1486,18 +1500,18 @@ class $OwnersTable extends Owners with TableInfo<$OwnersTable, Owner> {
 class HorseGalleryData extends DataClass
     implements Insertable<HorseGalleryData> {
   final int id;
-  final String registrationName;
+  final String horseID;
   final Uint8List photo;
   HorseGalleryData(
-      {required this.id, required this.registrationName, required this.photo});
+      {required this.id, required this.horseID, required this.photo});
   factory HorseGalleryData.fromData(Map<String, dynamic> data,
       {String? prefix}) {
     final effectivePrefix = prefix ?? '';
     return HorseGalleryData(
       id: const IntType()
           .mapFromDatabaseResponse(data['${effectivePrefix}id'])!,
-      registrationName: const StringType().mapFromDatabaseResponse(
-          data['${effectivePrefix}registration_name'])!,
+      horseID: const StringType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}horse_i_d'])!,
       photo: const BlobType()
           .mapFromDatabaseResponse(data['${effectivePrefix}photo'])!,
     );
@@ -1506,7 +1520,7 @@ class HorseGalleryData extends DataClass
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['registration_name'] = Variable<String>(registrationName);
+    map['horse_i_d'] = Variable<String>(horseID);
     map['photo'] = Variable<Uint8List>(photo);
     return map;
   }
@@ -1514,7 +1528,7 @@ class HorseGalleryData extends DataClass
   HorseGalleryCompanion toCompanion(bool nullToAbsent) {
     return HorseGalleryCompanion(
       id: Value(id),
-      registrationName: Value(registrationName),
+      horseID: Value(horseID),
       photo: Value(photo),
     );
   }
@@ -1524,7 +1538,7 @@ class HorseGalleryData extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return HorseGalleryData(
       id: serializer.fromJson<int>(json['id']),
-      registrationName: serializer.fromJson<String>(json['registrationName']),
+      horseID: serializer.fromJson<String>(json['horseID']),
       photo: serializer.fromJson<Uint8List>(json['photo']),
     );
   }
@@ -1533,73 +1547,70 @@ class HorseGalleryData extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'registrationName': serializer.toJson<String>(registrationName),
+      'horseID': serializer.toJson<String>(horseID),
       'photo': serializer.toJson<Uint8List>(photo),
     };
   }
 
-  HorseGalleryData copyWith(
-          {int? id, String? registrationName, Uint8List? photo}) =>
+  HorseGalleryData copyWith({int? id, String? horseID, Uint8List? photo}) =>
       HorseGalleryData(
         id: id ?? this.id,
-        registrationName: registrationName ?? this.registrationName,
+        horseID: horseID ?? this.horseID,
         photo: photo ?? this.photo,
       );
   @override
   String toString() {
     return (StringBuffer('HorseGalleryData(')
           ..write('id: $id, ')
-          ..write('registrationName: $registrationName, ')
+          ..write('horseID: $horseID, ')
           ..write('photo: $photo')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, registrationName, photo);
+  int get hashCode => Object.hash(id, horseID, photo);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is HorseGalleryData &&
           other.id == this.id &&
-          other.registrationName == this.registrationName &&
+          other.horseID == this.horseID &&
           other.photo == this.photo);
 }
 
 class HorseGalleryCompanion extends UpdateCompanion<HorseGalleryData> {
   final Value<int> id;
-  final Value<String> registrationName;
+  final Value<String> horseID;
   final Value<Uint8List> photo;
   const HorseGalleryCompanion({
     this.id = const Value.absent(),
-    this.registrationName = const Value.absent(),
+    this.horseID = const Value.absent(),
     this.photo = const Value.absent(),
   });
   HorseGalleryCompanion.insert({
     this.id = const Value.absent(),
-    required String registrationName,
+    required String horseID,
     required Uint8List photo,
-  })  : registrationName = Value(registrationName),
+  })  : horseID = Value(horseID),
         photo = Value(photo);
   static Insertable<HorseGalleryData> custom({
     Expression<int>? id,
-    Expression<String>? registrationName,
+    Expression<String>? horseID,
     Expression<Uint8List>? photo,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (registrationName != null) 'registration_name': registrationName,
+      if (horseID != null) 'horse_i_d': horseID,
       if (photo != null) 'photo': photo,
     });
   }
 
   HorseGalleryCompanion copyWith(
-      {Value<int>? id,
-      Value<String>? registrationName,
-      Value<Uint8List>? photo}) {
+      {Value<int>? id, Value<String>? horseID, Value<Uint8List>? photo}) {
     return HorseGalleryCompanion(
       id: id ?? this.id,
-      registrationName: registrationName ?? this.registrationName,
+      horseID: horseID ?? this.horseID,
       photo: photo ?? this.photo,
     );
   }
@@ -1610,8 +1621,8 @@ class HorseGalleryCompanion extends UpdateCompanion<HorseGalleryData> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
-    if (registrationName.present) {
-      map['registration_name'] = Variable<String>(registrationName.value);
+    if (horseID.present) {
+      map['horse_i_d'] = Variable<String>(horseID.value);
     }
     if (photo.present) {
       map['photo'] = Variable<Uint8List>(photo.value);
@@ -1623,7 +1634,7 @@ class HorseGalleryCompanion extends UpdateCompanion<HorseGalleryData> {
   String toString() {
     return (StringBuffer('HorseGalleryCompanion(')
           ..write('id: $id, ')
-          ..write('registrationName: $registrationName, ')
+          ..write('horseID: $horseID, ')
           ..write('photo: $photo')
           ..write(')'))
         .toString();
@@ -1643,21 +1654,18 @@ class $HorseGalleryTable extends HorseGallery
       type: const IntType(),
       requiredDuringInsert: false,
       defaultConstraints: 'PRIMARY KEY AUTOINCREMENT');
-  final VerificationMeta _registrationNameMeta =
-      const VerificationMeta('registrationName');
+  final VerificationMeta _horseIDMeta = const VerificationMeta('horseID');
   @override
-  late final GeneratedColumn<String?> registrationName =
-      GeneratedColumn<String?>('registration_name', aliasedName, false,
-          type: const StringType(),
-          requiredDuringInsert: true,
-          $customConstraints: 'NOT NULL REFERENCES horses(registration_name)');
+  late final GeneratedColumn<String?> horseID = GeneratedColumn<String?>(
+      'horse_i_d', aliasedName, false,
+      type: const StringType(), requiredDuringInsert: true);
   final VerificationMeta _photoMeta = const VerificationMeta('photo');
   @override
   late final GeneratedColumn<Uint8List?> photo = GeneratedColumn<Uint8List?>(
       'photo', aliasedName, false,
       type: const BlobType(), requiredDuringInsert: true);
   @override
-  List<GeneratedColumn> get $columns => [id, registrationName, photo];
+  List<GeneratedColumn> get $columns => [id, horseID, photo];
   @override
   String get aliasedName => _alias ?? 'horseGallery';
   @override
@@ -1670,13 +1678,11 @@ class $HorseGalleryTable extends HorseGallery
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
-    if (data.containsKey('registration_name')) {
-      context.handle(
-          _registrationNameMeta,
-          registrationName.isAcceptableOrUnknown(
-              data['registration_name']!, _registrationNameMeta));
+    if (data.containsKey('horse_i_d')) {
+      context.handle(_horseIDMeta,
+          horseID.isAcceptableOrUnknown(data['horse_i_d']!, _horseIDMeta));
     } else if (isInserting) {
-      context.missing(_registrationNameMeta);
+      context.missing(_horseIDMeta);
     }
     if (data.containsKey('photo')) {
       context.handle(

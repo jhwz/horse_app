@@ -8,6 +8,7 @@ import 'package:horse_app/utils/labelled_divider.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:reactive_date_time_picker/reactive_date_time_picker.dart';
 import 'package:reactive_range_slider/reactive_range_slider.dart';
+import 'package:uuid/uuid.dart';
 import '../reactive/image_picker.dart';
 
 import '../utils/utils.dart';
@@ -53,7 +54,8 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
 
   @override
   Widget build(BuildContext context) {
-    String title = horse == null ? 'New Horse' : '${horse!.name} Profile';
+    String title =
+        horse == null ? 'New Horse' : '${horse!.displayName} Profile';
 
     return WillPopScope(
       onWillPop: () async {
@@ -68,7 +70,7 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
           formGroup: form,
           child: CreateHorseSubmitButton(
             formGroup: form,
-            update: horse != null,
+            id: horse?.id,
           ),
         ),
         body: Padding(
@@ -81,7 +83,6 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
                   Padding(
                     padding: _padding,
                     child: ReactiveTextField(
-                      readOnly: horse != null,
                       formControlName: 'registrationName',
                       decoration: const InputDecoration(
                         labelText: 'Registration Name',
@@ -170,11 +171,11 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
 
 class CreateHorseSubmitButton extends StatelessWidget {
   final FormGroup formGroup;
-  final bool update;
+  final String? id;
   const CreateHorseSubmitButton({
     Key? key,
     required this.formGroup,
-    required this.update,
+    required this.id,
   }) : super(key: key);
 
   @override
@@ -199,8 +200,9 @@ class CreateHorseSubmitButton extends StatelessWidget {
                   }
 
                   final weight = f["weight"] as RangeValues;
+
                   var horse = Horse(
-                    // photo: f['photo'],
+                    id: id ?? const Uuid().v4(),
                     registrationName: f['registrationName'],
                     registrationNumber: f['registrationNumber'],
                     name: f['name'],
@@ -211,24 +213,24 @@ class CreateHorseSubmitButton extends StatelessWidget {
                     maxWeight: weight.end,
                   );
 
-                  await (update
+                  await (id != null
                       ? db.updateHorse(horse)
                       : db.createHorse(horse));
 
                   showSuccess(context,
-                      'Sucessfully ${update ? 'updated' : 'created'}!');
+                      'Sucessfully ${id != null ? 'updated' : 'created'}!');
                   Future.delayed(const Duration(milliseconds: 500), () {
                     Navigator.pop(context, horse);
                   });
                 } catch (e) {
                   showError(context,
-                      'Failed to ${update ? 'save changes' : 'create'} horse: ${e.toString()}');
+                      'Failed to ${id != null ? 'save changes' : 'create'} horse: ${e.toString()}');
                 }
               }
             : null,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12.0),
-          child: Text(update ? 'Save Changes' : 'Create Horse'),
+          child: Text(id != null ? 'Save Changes' : 'Create Horse'),
         ),
       ),
     );

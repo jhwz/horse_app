@@ -37,10 +37,10 @@ class _HorsesPageState extends State<HorsesPage> {
     super.initState();
   }
 
-  Future<void> _onDelete(String registrationName) async {
+  Future<void> _onDelete(String id) async {
     setState(() {
       _pagingController.itemList!
-          .removeWhere((item) => item.registrationName == registrationName);
+          .removeWhere((item) => item.id == id);
       _pagingController.itemList = _pagingController.itemList;
     });
   }
@@ -50,13 +50,13 @@ class _HorsesPageState extends State<HorsesPage> {
       return HorseProfilePage(horse: horse);
     }));
     try {
-      horse = await db.getHorse(horse.registrationName);
+      horse = await db.getHorse(horse.id);
       setState(() {
         _pagingController.itemList![idx] = horse;
       });
     } catch (e) {
       if (e is StateError && e.message == 'No element') {
-        _onDelete(horse.registrationName);
+        _onDelete(horse.id);
       } else {
         showError(context, "Something went wrong when reloading horse...");
       }
