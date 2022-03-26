@@ -274,9 +274,23 @@ class AppDb extends _$AppDb {
 
   deleteHorse(String id) async {
     return transaction(() async {
+      // remove the horse
       await (delete(horses)..where((tbl) => tbl.id.equals(id))).go();
 
+      // remove any images we have stored
+      await (delete(horseGallery)..where((tbl) => tbl.horseID.equals(id))).go();
+
+      // get the relevant events
+      final horseEvents =
+          await (select(events)..where((tbl) => tbl.horseID.equals(id))).get();
+
+      // delete the events
       await (delete(events)..where((tbl) => tbl.horseID.equals(id))).go();
+
+      // then delete the events photos from the gallery
+      final eventIDs = horseEvents.map((e) => e.id);
+      await (delete(eventGallery)..where((tbl) => tbl.eventID.isIn(eventIDs)))
+          .go();
     });
   }
 
@@ -392,7 +406,12 @@ class AppDb extends _$AppDb {
   }
 
   deleteEvent(int eventID) async {
-    await delete(events).delete(EventsCompanion(id: Value(eventID)));
+    await transaction(() async {
+      await delete(events).delete(EventsCompanion(id: Value(eventID)));
+
+      await (delete(eventGallery)..where((tbl) => tbl.eventID.equals(eventID)))
+          .go();
+    });
   }
 
   // *******************
