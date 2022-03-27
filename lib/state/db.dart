@@ -459,18 +459,17 @@ class AppDb extends _$AppDb {
 
     List<HorseGalleryData> horseGalleryData = [];
     Map<String, String> registrationToUUID = {};
-    Map<String, String?> uuidToSireRegistratioin = {};
-    Map<String, String?> uuidToDamRegistratioin = {};
+    Map<String, String?> uuidToSireRegistration = {};
+    Map<String, String?> uuidToDamRegistration = {};
 
     print("creating mapping");
     for (var row in rows) {
       final newID = const Uuid().v4();
       final registrationName = row.read<String>("registration_name");
       registrationToUUID[registrationName] = newID;
-      uuidToSireRegistratioin[newID] =
+      uuidToSireRegistration[newID] =
           row.read<String?>("sire_registration_name");
-      uuidToDamRegistratioin[newID] =
-          row.read<String?>("dam_registration_name");
+      uuidToDamRegistration[newID] = row.read<String?>("dam_registration_name");
       final photo = row.read<Uint8List?>("photo");
       if (photo == null) {
         continue;
@@ -529,33 +528,37 @@ class AppDb extends _$AppDb {
     print("inserting existing data into new tables");
     await transaction(() async {
       // update the horses table and the events table
-      registrationToUUID.forEach((reg, horseUUID) async {
+      for (final e in registrationToUUID.entries) {
         Value<int> profilePhotoValue = const Value.absent();
-        final galleryData = horseGalleryData
-            .where((data) => data.horseID == horseUUID)
-            .toList();
+        final galleryData =
+            horseGalleryData.where((data) => data.horseID == e.value).toList();
         if (galleryData.isNotEmpty) {
           profilePhotoValue = Value(galleryData.first.id);
         }
 
-        await (update(horses)..where((tbl) => tbl.registrationName.equals(reg)))
+        await (update(horses)
+              ..where((tbl) => tbl.registrationName.equals(e.key)))
             .write(HorsesCompanion(
-                id: Value(horseUUID),
+                id: Value(e.value),
                 minWeight: const Value(0),
                 maxWeight: const Value(0),
-                sireID: Value.ofNullable(uuidToSireRegistratioin[horseUUID]),
-                damID: Value.ofNullable(uuidToDamRegistratioin[horseUUID]),
+                sireID: Value.ofNullable(uuidToSireRegistration[e.value] != null
+                    ? registrationToUUID[uuidToSireRegistration[e.value]]
+                    : null),
+                damID: Value.ofNullable(uuidToDamRegistration[e.value] != null
+                    ? registrationToUUID[uuidToDamRegistration[e.value]]
+                    : null),
                 profilePhoto: profilePhotoValue,
                 owner: Value(uuid)));
-      });
+      }
 
       // update the events table
-      eventToRegistration.forEach((eventID, registrationName) async {
-        await (update(events)..where((tbl) => tbl.id.equals(eventID))).write(
+      for (final e in eventToRegistration.entries) {
+        await (update(events)..where((tbl) => tbl.id.equals(e.key))).write(
             EventsCompanion(
-                id: Value(eventID),
-                horseID: Value(registrationToUUID[registrationName]!)));
-      });
+                id: Value(e.key),
+                horseID: Value(registrationToUUID[e.value]!)));
+      }
     });
   }
 }
