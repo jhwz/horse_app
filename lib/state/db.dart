@@ -517,7 +517,11 @@ class AppDb extends _$AppDb {
 
     print("altering event table");
     // update the events table to use UUIDs
-    await m.alterTable(TableMigration(events, newColumns: [events.horseID]));
+    await m.alterTable(TableMigration(events, newColumns: [
+      events.horseID
+    ], columnTransformer: {
+      events.horseID: const CustomExpression("registration_name")
+    }));
 
     print("creating new owner");
     await safeSetOwner();
