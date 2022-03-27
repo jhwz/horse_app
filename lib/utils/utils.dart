@@ -133,6 +133,7 @@ void showInfo(BuildContext context, String message) {
 }
 
 void showError(BuildContext context, String message) {
+  print(message);
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(message),
