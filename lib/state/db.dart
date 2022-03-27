@@ -499,6 +499,7 @@ class AppDb extends _$AppDb {
       columnTransformer: {
         horses.owner: horses.owner.cast<String>(),
         horses.breeder: horses.breeder.cast<String>(),
+        horses.id: horses.registrationName
       },
       newColumns: [
         horses.id,
