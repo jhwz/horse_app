@@ -544,12 +544,11 @@ class AppDb extends _$AppDb {
                 minWeight: const Value(0),
                 maxWeight: const Value(0),
                 sireID: uuidToSireRegistration[e.value] != null
-                    ? Value.ofNullable(
+                    ? Value(
                         registrationToUUID[uuidToSireRegistration[e.value]!])
                     : const Value.absent(),
                 damID: uuidToDamRegistration[e.value] != null
-                    ? Value.ofNullable(
-                        registrationToUUID[uuidToDamRegistration[e.value]!])
+                    ? Value(registrationToUUID[uuidToDamRegistration[e.value]!])
                     : const Value.absent(),
                 profilePhoto: profilePhotoValue,
                 owner: Value(uuid)));
