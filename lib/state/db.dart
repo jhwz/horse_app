@@ -111,6 +111,10 @@ class Events extends Table {
   // The time this event occurred at.
   DateTimeColumn get date => dateTime().clientDefault(() => DateTime.now())();
 
+  // Allows us to associate a cost with an event so we are able to
+  // give estimates for the costs of looking after different horses.
+  RealColumn get cost => real().nullable()();
+
   // Any extra notes that the user may want to write about the event.
   TextColumn get notes => text().nullable()();
 
@@ -518,11 +522,16 @@ class AppDb extends _$AppDb {
 
       print("altering event table");
       // update the events table to use UUIDs
-      await m.alterTable(TableMigration(events, newColumns: [
-        events.horseID
-      ], columnTransformer: {
-        events.horseID: const CustomExpression("registration_name")
-      }));
+      await m.alterTable(TableMigration(
+        events,
+        newColumns: [
+          events.horseID,
+          events.cost,
+        ],
+        columnTransformer: {
+          events.horseID: const CustomExpression("registration_name")
+        },
+      ));
 
       print("creating new owner");
       await safeSetOwner();

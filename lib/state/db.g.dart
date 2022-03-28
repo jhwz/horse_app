@@ -12,6 +12,7 @@ class Event extends DataClass implements Insertable<Event> {
   final String type;
   final String horseID;
   final DateTime date;
+  final double? cost;
   final String? notes;
   final Map<String, dynamic>? extra;
   Event(
@@ -19,6 +20,7 @@ class Event extends DataClass implements Insertable<Event> {
       required this.type,
       required this.horseID,
       required this.date,
+      this.cost,
       this.notes,
       this.extra});
   factory Event.fromData(Map<String, dynamic> data, {String? prefix}) {
@@ -32,6 +34,8 @@ class Event extends DataClass implements Insertable<Event> {
           .mapFromDatabaseResponse(data['${effectivePrefix}horse_i_d'])!,
       date: const DateTimeType()
           .mapFromDatabaseResponse(data['${effectivePrefix}date'])!,
+      cost: const RealType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}cost']),
       notes: const StringType()
           .mapFromDatabaseResponse(data['${effectivePrefix}notes']),
       extra: $EventsTable.$converter0.mapToDart(const StringType()
@@ -45,6 +49,9 @@ class Event extends DataClass implements Insertable<Event> {
     map['type'] = Variable<String>(type);
     map['horse_i_d'] = Variable<String>(horseID);
     map['date'] = Variable<DateTime>(date);
+    if (!nullToAbsent || cost != null) {
+      map['cost'] = Variable<double?>(cost);
+    }
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String?>(notes);
     }
@@ -61,6 +68,7 @@ class Event extends DataClass implements Insertable<Event> {
       type: Value(type),
       horseID: Value(horseID),
       date: Value(date),
+      cost: cost == null && nullToAbsent ? const Value.absent() : Value(cost),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
       extra:
@@ -76,6 +84,7 @@ class Event extends DataClass implements Insertable<Event> {
       type: serializer.fromJson<String>(json['type']),
       horseID: serializer.fromJson<String>(json['horseID']),
       date: serializer.fromJson<DateTime>(json['date']),
+      cost: serializer.fromJson<double?>(json['cost']),
       notes: serializer.fromJson<String?>(json['notes']),
       extra: serializer.fromJson<Map<String, dynamic>?>(json['extra']),
     );
@@ -88,6 +97,7 @@ class Event extends DataClass implements Insertable<Event> {
       'type': serializer.toJson<String>(type),
       'horseID': serializer.toJson<String>(horseID),
       'date': serializer.toJson<DateTime>(date),
+      'cost': serializer.toJson<double?>(cost),
       'notes': serializer.toJson<String?>(notes),
       'extra': serializer.toJson<Map<String, dynamic>?>(extra),
     };
@@ -98,6 +108,7 @@ class Event extends DataClass implements Insertable<Event> {
           String? type,
           String? horseID,
           DateTime? date,
+          Value<double?> cost = const Value.absent(),
           Value<String?> notes = const Value.absent(),
           Value<Map<String, dynamic>?> extra = const Value.absent()}) =>
       Event(
@@ -105,6 +116,7 @@ class Event extends DataClass implements Insertable<Event> {
         type: type ?? this.type,
         horseID: horseID ?? this.horseID,
         date: date ?? this.date,
+        cost: cost.present ? cost.value : this.cost,
         notes: notes.present ? notes.value : this.notes,
         extra: extra.present ? extra.value : this.extra,
       );
@@ -115,6 +127,7 @@ class Event extends DataClass implements Insertable<Event> {
           ..write('type: $type, ')
           ..write('horseID: $horseID, ')
           ..write('date: $date, ')
+          ..write('cost: $cost, ')
           ..write('notes: $notes, ')
           ..write('extra: $extra')
           ..write(')'))
@@ -122,7 +135,7 @@ class Event extends DataClass implements Insertable<Event> {
   }
 
   @override
-  int get hashCode => Object.hash(id, type, horseID, date, notes, extra);
+  int get hashCode => Object.hash(id, type, horseID, date, cost, notes, extra);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -131,6 +144,7 @@ class Event extends DataClass implements Insertable<Event> {
           other.type == this.type &&
           other.horseID == this.horseID &&
           other.date == this.date &&
+          other.cost == this.cost &&
           other.notes == this.notes &&
           other.extra == this.extra);
 }
@@ -140,6 +154,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
   final Value<String> type;
   final Value<String> horseID;
   final Value<DateTime> date;
+  final Value<double?> cost;
   final Value<String?> notes;
   final Value<Map<String, dynamic>?> extra;
   const EventsCompanion({
@@ -147,6 +162,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
     this.type = const Value.absent(),
     this.horseID = const Value.absent(),
     this.date = const Value.absent(),
+    this.cost = const Value.absent(),
     this.notes = const Value.absent(),
     this.extra = const Value.absent(),
   });
@@ -155,6 +171,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
     required String type,
     required String horseID,
     this.date = const Value.absent(),
+    this.cost = const Value.absent(),
     this.notes = const Value.absent(),
     this.extra = const Value.absent(),
   })  : type = Value(type),
@@ -164,6 +181,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
     Expression<String>? type,
     Expression<String>? horseID,
     Expression<DateTime>? date,
+    Expression<double?>? cost,
     Expression<String?>? notes,
     Expression<Map<String, dynamic>?>? extra,
   }) {
@@ -172,6 +190,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
       if (type != null) 'type': type,
       if (horseID != null) 'horse_i_d': horseID,
       if (date != null) 'date': date,
+      if (cost != null) 'cost': cost,
       if (notes != null) 'notes': notes,
       if (extra != null) 'extra': extra,
     });
@@ -182,6 +201,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
       Value<String>? type,
       Value<String>? horseID,
       Value<DateTime>? date,
+      Value<double?>? cost,
       Value<String?>? notes,
       Value<Map<String, dynamic>?>? extra}) {
     return EventsCompanion(
@@ -189,6 +209,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
       type: type ?? this.type,
       horseID: horseID ?? this.horseID,
       date: date ?? this.date,
+      cost: cost ?? this.cost,
       notes: notes ?? this.notes,
       extra: extra ?? this.extra,
     );
@@ -209,6 +230,9 @@ class EventsCompanion extends UpdateCompanion<Event> {
     if (date.present) {
       map['date'] = Variable<DateTime>(date.value);
     }
+    if (cost.present) {
+      map['cost'] = Variable<double?>(cost.value);
+    }
     if (notes.present) {
       map['notes'] = Variable<String?>(notes.value);
     }
@@ -226,6 +250,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
           ..write('type: $type, ')
           ..write('horseID: $horseID, ')
           ..write('date: $date, ')
+          ..write('cost: $cost, ')
           ..write('notes: $notes, ')
           ..write('extra: $extra')
           ..write(')'))
@@ -262,6 +287,11 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
       type: const IntType(),
       requiredDuringInsert: false,
       clientDefault: () => DateTime.now());
+  final VerificationMeta _costMeta = const VerificationMeta('cost');
+  @override
+  late final GeneratedColumn<double?> cost = GeneratedColumn<double?>(
+      'cost', aliasedName, true,
+      type: const RealType(), requiredDuringInsert: false);
   final VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
   late final GeneratedColumn<String?> notes = GeneratedColumn<String?>(
@@ -274,7 +304,8 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
               type: const StringType(), requiredDuringInsert: false)
           .withConverter<Map<String, dynamic>>($EventsTable.$converter0);
   @override
-  List<GeneratedColumn> get $columns => [id, type, horseID, date, notes, extra];
+  List<GeneratedColumn> get $columns =>
+      [id, type, horseID, date, cost, notes, extra];
   @override
   String get aliasedName => _alias ?? 'events';
   @override
@@ -302,6 +333,10 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
     if (data.containsKey('date')) {
       context.handle(
           _dateMeta, date.isAcceptableOrUnknown(data['date']!, _dateMeta));
+    }
+    if (data.containsKey('cost')) {
+      context.handle(
+          _costMeta, cost.isAcceptableOrUnknown(data['cost']!, _costMeta));
     }
     if (data.containsKey('notes')) {
       context.handle(
