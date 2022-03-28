@@ -35,8 +35,7 @@ class _CreateHorsePageState extends State<CreateHorsePage> {
     horse = widget.horse;
 
     form = FormGroup({
-      'registrationName': FormControl<String>(
-          validators: [Validators.required], value: horse?.registrationName),
+      'registrationName': FormControl<String>(value: horse?.registrationName),
       'registrationNumber':
           FormControl<String>(value: horse?.registrationNumber),
       'name': FormControl<String>(

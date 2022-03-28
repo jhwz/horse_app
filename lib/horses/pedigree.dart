@@ -188,7 +188,10 @@ class ParentSection extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) => SelectFromList(
-                          before: horse.dateOfBirth, sex: parentSex),
+                        before: horse.dateOfBirth,
+                        sex: parentSex,
+                        canCreate: true,
+                      ),
                     ),
                   );
                   if (next != null && next is Horse) onUpdate(next);

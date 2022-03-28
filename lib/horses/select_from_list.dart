@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:horse_app/horses/create.dart';
 import 'package:horse_app/horses/list_item.dart';
 import 'package:horse_app/state/db.dart';
 import 'package:horse_app/utils/app_bar_search.dart';
@@ -8,8 +9,11 @@ import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 class SelectFromList extends StatefulWidget {
   final DateTime? before;
   final List<Sex>? sex;
+  final bool canCreate;
 
-  const SelectFromList({Key? key, this.before, this.sex}) : super(key: key);
+  const SelectFromList(
+      {Key? key, this.before, this.sex, required this.canCreate})
+      : super(key: key);
 
   @override
   State<SelectFromList> createState() => _SelectFromListState();
@@ -114,6 +118,20 @@ class _SelectFromListState extends State<SelectFromList> {
                   )),
         ),
       ),
+      floatingActionButton: widget.canCreate
+          ? FloatingActionButton(
+              onPressed: () async {
+                final horse = await Navigator.push<Horse?>(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const CreateHorsePage()));
+
+                if (horse != null) Navigator.pop(context, horse);
+              },
+              tooltip: 'Add Horse',
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 
