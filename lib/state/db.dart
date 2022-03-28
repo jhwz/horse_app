@@ -444,89 +444,90 @@ class AppDb extends _$AppDb {
   }
 
   v1tov2(Migrator m) async {
-    // Add the new tables
-    await m.createTable(owners);
-    await m.createTable(eventGallery);
-    await m.createTable(horseGallery);
-
-    print("selecting existing data");
-    // Get the existing photo from each horse and add it to
-    // the horse gallery. Then get the id for each of those photos
-    // and set them as the horse's photo.
-    final rows = await customSelect(
-            "SELECT photo, registration_name, sire_registration_name, dam_registration_name FROM horses")
-        .get();
-
-    List<HorseGalleryData> horseGalleryData = [];
-    Map<String, String> registrationToUUID = {};
-    Map<String, String?> uuidToSireRegistration = {};
-    Map<String, String?> uuidToDamRegistration = {};
-
-    print("creating mapping");
-    for (var row in rows) {
-      final newID = const Uuid().v4();
-      final registrationName = row.read<String>("registration_name");
-      registrationToUUID[registrationName] = newID;
-      uuidToSireRegistration[newID] =
-          row.read<String?>("sire_registration_name");
-      uuidToDamRegistration[newID] = row.read<String?>("dam_registration_name");
-      final photo = row.read<Uint8List?>("photo");
-      if (photo == null) {
-        continue;
-      }
-      horseGalleryData.add(
-        HorseGalleryData(
-          id: horseGalleryData.length,
-          horseID: newID,
-          photo: photo,
-        ),
-      );
-      await into(horseGallery).insert(horseGalleryData.last);
-    }
-
-    print("fetching existing events");
-    final eventRows =
-        await customSelect("SELECT id, registration_name FROM events").get();
-    Map<int, String> eventToRegistration = {};
-    for (var row in eventRows) {
-      final eventID = row.read<int>("id");
-      final registrationName = row.read<String>("registration_name");
-      eventToRegistration[eventID] = registrationName;
-    }
-
-    print("altering horse table");
-    // Cast the owner and breeders columns to text type now
-    // we are using UUIDs
-    await m.alterTable(TableMigration(
-      horses,
-      columnTransformer: {
-        horses.owner: horses.owner.cast<String>(),
-        horses.breeder: horses.breeder.cast<String>(),
-        horses.id: horses.registrationName
-      },
-      newColumns: [
-        horses.id,
-        horses.minWeight,
-        horses.maxWeight,
-        horses.profilePhoto,
-        horses.sireID,
-        horses.damID,
-      ],
-    ));
-
-    print("altering event table");
-    // update the events table to use UUIDs
-    await m.alterTable(TableMigration(events, newColumns: [
-      events.horseID
-    ], columnTransformer: {
-      events.horseID: const CustomExpression("registration_name")
-    }));
-
-    print("creating new owner");
-    await safeSetOwner();
-
-    print("inserting existing data into new tables");
     await transaction(() async {
+      // Add the new tables
+      await m.createTable(owners);
+      await m.createTable(eventGallery);
+      await m.createTable(horseGallery);
+
+      print("selecting existing data");
+      // Get the existing photo from each horse and add it to
+      // the horse gallery. Then get the id for each of those photos
+      // and set them as the horse's photo.
+      final rows = await customSelect(
+              "SELECT photo, registration_name, sire_registration_name, dam_registration_name FROM horses")
+          .get();
+
+      List<HorseGalleryData> horseGalleryData = [];
+      Map<String, String> registrationToUUID = {};
+      Map<String, String?> uuidToSireRegistration = {};
+      Map<String, String?> uuidToDamRegistration = {};
+
+      print("creating mapping");
+      for (var row in rows) {
+        final newID = const Uuid().v4();
+        final registrationName = row.read<String>("registration_name");
+        registrationToUUID[registrationName] = newID;
+        uuidToSireRegistration[newID] =
+            row.read<String?>("sire_registration_name");
+        uuidToDamRegistration[newID] =
+            row.read<String?>("dam_registration_name");
+        final photo = row.read<Uint8List?>("photo");
+        if (photo == null) {
+          continue;
+        }
+        horseGalleryData.add(
+          HorseGalleryData(
+            id: horseGalleryData.length,
+            horseID: newID,
+            photo: photo,
+          ),
+        );
+        await into(horseGallery).insert(horseGalleryData.last);
+      }
+
+      print("fetching existing events");
+      final eventRows =
+          await customSelect("SELECT id, registration_name FROM events").get();
+      Map<int, String> eventToRegistration = {};
+      for (var row in eventRows) {
+        final eventID = row.read<int>("id");
+        final registrationName = row.read<String>("registration_name");
+        eventToRegistration[eventID] = registrationName;
+      }
+
+      print("altering horse table");
+      // Cast the owner and breeders columns to text type now
+      // we are using UUIDs
+      await m.alterTable(TableMigration(
+        horses,
+        columnTransformer: {
+          horses.owner: horses.owner.cast<String>(),
+          horses.breeder: horses.breeder.cast<String>(),
+          horses.id: horses.registrationName
+        },
+        newColumns: [
+          horses.id,
+          horses.minWeight,
+          horses.maxWeight,
+          horses.profilePhoto,
+          horses.sireID,
+          horses.damID,
+        ],
+      ));
+
+      print("altering event table");
+      // update the events table to use UUIDs
+      await m.alterTable(TableMigration(events, newColumns: [
+        events.horseID
+      ], columnTransformer: {
+        events.horseID: const CustomExpression("registration_name")
+      }));
+
+      print("creating new owner");
+      await safeSetOwner();
+
+      print("inserting existing data into new tables");
       // update the horses table and the events table
       for (final e in registrationToUUID.entries) {
         Value<int> profilePhotoValue = const Value.absent();
@@ -544,11 +545,11 @@ class AppDb extends _$AppDb {
                 maxWeight: const Value(0),
                 sireID: uuidToSireRegistration[e.value] != null
                     ? Value.ofNullable(
-                        registrationToUUID[uuidToSireRegistration[e.value]])
+                        registrationToUUID[uuidToSireRegistration[e.value]!])
                     : const Value.absent(),
                 damID: uuidToDamRegistration[e.value] != null
                     ? Value.ofNullable(
-                        registrationToUUID[uuidToDamRegistration[e.value]])
+                        registrationToUUID[uuidToDamRegistration[e.value]!])
                     : const Value.absent(),
                 profilePhoto: profilePhotoValue,
                 owner: Value(uuid)));
