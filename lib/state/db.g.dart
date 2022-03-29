@@ -1745,18 +1745,14 @@ class $HorseGalleryTable extends HorseGallery
 class EventGalleryData extends DataClass
     implements Insertable<EventGalleryData> {
   final int id;
-  final int eventID;
   final Uint8List photo;
-  EventGalleryData(
-      {required this.id, required this.eventID, required this.photo});
+  EventGalleryData({required this.id, required this.photo});
   factory EventGalleryData.fromData(Map<String, dynamic> data,
       {String? prefix}) {
     final effectivePrefix = prefix ?? '';
     return EventGalleryData(
       id: const IntType()
           .mapFromDatabaseResponse(data['${effectivePrefix}id'])!,
-      eventID: const IntType()
-          .mapFromDatabaseResponse(data['${effectivePrefix}event_i_d'])!,
       photo: const BlobType()
           .mapFromDatabaseResponse(data['${effectivePrefix}photo'])!,
     );
@@ -1765,7 +1761,6 @@ class EventGalleryData extends DataClass
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['event_i_d'] = Variable<int>(eventID);
     map['photo'] = Variable<Uint8List>(photo);
     return map;
   }
@@ -1773,7 +1768,6 @@ class EventGalleryData extends DataClass
   EventGalleryCompanion toCompanion(bool nullToAbsent) {
     return EventGalleryCompanion(
       id: Value(id),
-      eventID: Value(eventID),
       photo: Value(photo),
     );
   }
@@ -1783,7 +1777,6 @@ class EventGalleryData extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return EventGalleryData(
       id: serializer.fromJson<int>(json['id']),
-      eventID: serializer.fromJson<int>(json['eventID']),
       photo: serializer.fromJson<Uint8List>(json['photo']),
     );
   }
@@ -1792,70 +1785,57 @@ class EventGalleryData extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'eventID': serializer.toJson<int>(eventID),
       'photo': serializer.toJson<Uint8List>(photo),
     };
   }
 
-  EventGalleryData copyWith({int? id, int? eventID, Uint8List? photo}) =>
-      EventGalleryData(
+  EventGalleryData copyWith({int? id, Uint8List? photo}) => EventGalleryData(
         id: id ?? this.id,
-        eventID: eventID ?? this.eventID,
         photo: photo ?? this.photo,
       );
   @override
   String toString() {
     return (StringBuffer('EventGalleryData(')
           ..write('id: $id, ')
-          ..write('eventID: $eventID, ')
           ..write('photo: $photo')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, eventID, photo);
+  int get hashCode => Object.hash(id, photo);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is EventGalleryData &&
           other.id == this.id &&
-          other.eventID == this.eventID &&
           other.photo == this.photo);
 }
 
 class EventGalleryCompanion extends UpdateCompanion<EventGalleryData> {
   final Value<int> id;
-  final Value<int> eventID;
   final Value<Uint8List> photo;
   const EventGalleryCompanion({
     this.id = const Value.absent(),
-    this.eventID = const Value.absent(),
     this.photo = const Value.absent(),
   });
   EventGalleryCompanion.insert({
     this.id = const Value.absent(),
-    required int eventID,
     required Uint8List photo,
-  })  : eventID = Value(eventID),
-        photo = Value(photo);
+  }) : photo = Value(photo);
   static Insertable<EventGalleryData> custom({
     Expression<int>? id,
-    Expression<int>? eventID,
     Expression<Uint8List>? photo,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (eventID != null) 'event_i_d': eventID,
       if (photo != null) 'photo': photo,
     });
   }
 
-  EventGalleryCompanion copyWith(
-      {Value<int>? id, Value<int>? eventID, Value<Uint8List>? photo}) {
+  EventGalleryCompanion copyWith({Value<int>? id, Value<Uint8List>? photo}) {
     return EventGalleryCompanion(
       id: id ?? this.id,
-      eventID: eventID ?? this.eventID,
       photo: photo ?? this.photo,
     );
   }
@@ -1865,9 +1845,6 @@ class EventGalleryCompanion extends UpdateCompanion<EventGalleryData> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
-    }
-    if (eventID.present) {
-      map['event_i_d'] = Variable<int>(eventID.value);
     }
     if (photo.present) {
       map['photo'] = Variable<Uint8List>(photo.value);
@@ -1879,7 +1856,6 @@ class EventGalleryCompanion extends UpdateCompanion<EventGalleryData> {
   String toString() {
     return (StringBuffer('EventGalleryCompanion(')
           ..write('id: $id, ')
-          ..write('eventID: $eventID, ')
           ..write('photo: $photo')
           ..write(')'))
         .toString();
@@ -1899,20 +1875,13 @@ class $EventGalleryTable extends EventGallery
       type: const IntType(),
       requiredDuringInsert: false,
       defaultConstraints: 'PRIMARY KEY AUTOINCREMENT');
-  final VerificationMeta _eventIDMeta = const VerificationMeta('eventID');
-  @override
-  late final GeneratedColumn<int?> eventID = GeneratedColumn<int?>(
-      'event_i_d', aliasedName, false,
-      type: const IntType(),
-      requiredDuringInsert: true,
-      $customConstraints: 'NOT NULL REFERENCES events(id)');
   final VerificationMeta _photoMeta = const VerificationMeta('photo');
   @override
   late final GeneratedColumn<Uint8List?> photo = GeneratedColumn<Uint8List?>(
       'photo', aliasedName, false,
       type: const BlobType(), requiredDuringInsert: true);
   @override
-  List<GeneratedColumn> get $columns => [id, eventID, photo];
+  List<GeneratedColumn> get $columns => [id, photo];
   @override
   String get aliasedName => _alias ?? 'eventGallery';
   @override
@@ -1924,12 +1893,6 @@ class $EventGalleryTable extends EventGallery
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('event_i_d')) {
-      context.handle(_eventIDMeta,
-          eventID.isAcceptableOrUnknown(data['event_i_d']!, _eventIDMeta));
-    } else if (isInserting) {
-      context.missing(_eventIDMeta);
     }
     if (data.containsKey('photo')) {
       context.handle(

@@ -180,9 +180,6 @@ class EventGallery extends Table {
 
   IntColumn get id => integer().autoIncrement()();
 
-  IntColumn get eventID =>
-      integer().customConstraint('NOT NULL REFERENCES events(id)')();
-
   // Optional blob containing the profile of the horse. May extend to having
   // a gallery of images for each horse.
   BlobColumn get photo => blob()();
@@ -284,17 +281,8 @@ class AppDb extends _$AppDb {
       // remove any images we have stored
       await (delete(horseGallery)..where((tbl) => tbl.horseID.equals(id))).go();
 
-      // get the relevant events
-      final horseEvents =
-          await (select(events)..where((tbl) => tbl.horseID.equals(id))).get();
-
       // delete the events
       await (delete(events)..where((tbl) => tbl.horseID.equals(id))).go();
-
-      // then delete the events photos from the gallery
-      final eventIDs = horseEvents.map((e) => e.id);
-      await (delete(eventGallery)..where((tbl) => tbl.eventID.isIn(eventIDs)))
-          .go();
     });
   }
 
@@ -412,10 +400,29 @@ class AppDb extends _$AppDb {
   deleteEvent(int eventID) async {
     await transaction(() async {
       await delete(events).delete(EventsCompanion(id: Value(eventID)));
-
-      await (delete(eventGallery)..where((tbl) => tbl.eventID.equals(eventID)))
-          .go();
     });
+  }
+
+  Future<Event?> lastEventOfTypeForHorse(
+      String eventType, String horseID) async {
+    final now = DateTime.now();
+
+    return (select(events)
+          ..where((tbl) =>
+              // past events
+              (tbl.date.isSmallerOrEqualValue(now)) &
+              // where the filter matches some key fields
+              (tbl.type.equals(eventType) & tbl.horseID.equals(horseID)))
+          ..limit(1)
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)
+          ]))
+        .getSingleOrNull();
+  }
+
+  Future<EventGalleryData> addPhoto({required Uint8List photo}) {
+    return into(eventGallery)
+        .insertReturning(EventGalleryCompanion(photo: Value(photo)));
   }
 
   // *******************

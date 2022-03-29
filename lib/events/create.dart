@@ -1,6 +1,3 @@
-import 'dart:collection';
-import 'dart:math';
-
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +5,8 @@ import 'package:horse_app/events/add_event_dialog.dart';
 import 'package:horse_app/events/types/noop.dart';
 import 'package:horse_app/events/types/types.dart';
 import 'package:horse_app/notifications.dart';
+import 'package:horse_app/reactive/validators.dart';
+import 'package:horse_app/utils/gallery.dart';
 import 'package:horse_app/utils/icon_text.dart';
 import 'package:horse_app/utils/notes.dart';
 import 'package:reactive_date_time_picker/reactive_date_time_picker.dart';
@@ -23,17 +22,21 @@ Future<void> _createEvent({
   required List<Horse> horses,
   required ET event,
   required String notes,
+  required List<Photo> photos,
 }) async {
   try {
     if (horses.isNotEmpty) {
       Map<String, dynamic> map = Map.from(form.value);
       final eventTime = map["date"] as DateTime;
       map.remove("date");
+      final cost = map["cost"] as String;
+      map.remove("cost");
 
       // create a unique event for each horse
       List<EventsCompanion> events = horses
           .map((h) => EventsCompanion(
                 date: Value(eventTime),
+                cost: Value(double.tryParse(cost) ?? 0),
                 horseID: Value(h.id),
                 type: Value(event.type),
                 notes: Value(notes),
@@ -88,11 +91,14 @@ class _NewEventPageState extends State<NewEventPage> {
   ET event = NoopEvent("noEvent");
   final List<Horse> _horses = [];
   List<Horse> _allHorses = [];
+  List<Photo> _images = [];
   bool _selectAllHorses = false;
   String _notes = "";
 
   FormGroup form = FormGroup({
     'date': FormControl<DateTime>(value: DateTime.now()),
+    'cost': FormControl<String>(
+        value: "0.00", validators: [CustomValidators.money]),
   });
   List<Widget>? widgetsForForm;
 
@@ -109,169 +115,175 @@ class _NewEventPageState extends State<NewEventPage> {
 
   void _constructForm(ET event) {
     form.addAll({...event.fields(null)});
+    widgetsForForm = event.formFields();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text(_title)),
-      bottomNavigationBar: _index == 1
-          ? Padding(
-              padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 24.0),
-              child: ElevatedButton(
-                onPressed: _horses.isNotEmpty
-                    ? () {
-                        setState(() {
-                          _index += 1;
-                        });
-                      }
-                    : null,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12.0),
-                  child: Text('Select and next'),
-                ),
-              ),
-            )
-          : _index == 2
-              ? Padding(
-                  padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 24.0),
-                  child: ElevatedButton(
-                    onPressed: !form.valid
-                        ? null
-                        : () => _createEvent(
-                              context: context,
-                              form: form,
-                              event: event,
-                              horses: _horses,
-                              notes: _notes,
-                            ),
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12.0),
-                      child: Text('Create Event'),
-                    ),
+    return ReactiveForm(
+      formGroup: form,
+      child: Scaffold(
+        appBar: AppBar(title: const Text(_title)),
+        bottomNavigationBar: _index == 1
+            ? Padding(
+                padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 24.0),
+                child: ElevatedButton(
+                  onPressed: _horses.isNotEmpty
+                      ? () async {
+                          setState(() {
+                            _index += 1;
+                          });
+                          final prevEvent = await db.lastEventOfTypeForHorse(
+                              event.type, _horses.first.id);
+                          form.controls["cost"]!.value =
+                              prevEvent?.cost?.toStringAsFixed(2) ?? "0.00";
+                        }
+                      : null,
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12.0),
+                    child: Text('Select and next'),
                   ),
-                )
-              : null,
-      body: Stepper(
-        currentStep: _index,
-        type: StepperType.horizontal,
-        elevation: 7,
-        controlsBuilder: (context, details) => const SizedBox.shrink(),
-        onStepTapped: (int index) {
-          if (index < _index) {
-            setState(() {
-              _index = index;
-            });
-          }
-        },
-        steps: <Step>[
-          //
-          // STEP 1
-          //
-          Step(
-            isActive: _index == 0,
-            state: _index == 0 ? StepState.editing : StepState.complete,
-            title: Text(_index == 0 ? 'Event Type' : event.formattedType),
-            content: Step1(
-              onTap: (e) {
-                setState(() {
-                  event = e;
-                  _constructForm(e);
-                  _index += 1;
-                });
-              },
+                ),
+              )
+            : _index == 2
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(8.0, 0, 8.0, 24.0),
+                    child: ElevatedButton(
+                      onPressed: !form.valid
+                          ? null
+                          : () => _createEvent(
+                                context: context,
+                                form: form,
+                                event: event,
+                                horses: _horses,
+                                notes: _notes,
+                                photos: _images,
+                              ),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12.0),
+                        child: Text('Create Event'),
+                      ),
+                    ),
+                  )
+                : null,
+        body: Stepper(
+          currentStep: _index,
+          type: StepperType.horizontal,
+          elevation: 7,
+          controlsBuilder: (context, details) => const SizedBox.shrink(),
+          onStepTapped: (int index) {
+            if (index < _index) {
+              setState(() {
+                _index = index;
+              });
+            }
+          },
+          steps: <Step>[
+            //
+            // STEP 1
+            //
+            Step(
+              isActive: _index == 0,
+              state: _index == 0 ? StepState.editing : StepState.complete,
+              title: Text(_index == 0 ? 'Event Type' : event.formattedType),
+              content: Step1(
+                onTap: (e) {
+                  setState(() {
+                    event = e;
+                    _constructForm(e);
+                    _index += 1;
+                  });
+                },
+              ),
             ),
-          ),
 
-          //
-          // STEP 2
-          //
-          Step(
-              isActive: _index == 1,
-              state: _index == 1
-                  ? StepState.editing
-                  : _index > 1
-                      ? StepState.complete
-                      : StepState.disabled,
-              title: const Text('Horses'),
-              content: FutureBuilder(
-                future: _loadHorses(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Step2Header(
-                            onSelect: (v) {
-                              setState(() {
-                                _selectAllHorses = v!;
-                                if (_selectAllHorses) {
-                                  _horses.addAll(_allHorses);
-                                } else {
-                                  _horses.clear();
-                                }
-                              });
-                            },
-                            isSelected: _selectAllHorses,
-                            onlyOneHorse: event.onlyAppliesToOne,
-                          ),
-                          ..._allHorses
-                              .where(event.appliesTo)
-                              .map(
-                                (h) => Container(
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: Theme.of(context).dividerColor,
-                                        width: 1,
+            //
+            // STEP 2
+            //
+            Step(
+                isActive: _index == 1,
+                state: _index == 1
+                    ? StepState.editing
+                    : _index > 1
+                        ? StepState.complete
+                        : StepState.disabled,
+                title: const Text('Horses'),
+                content: FutureBuilder(
+                  future: _loadHorses(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Step2Header(
+                              onSelect: (v) {
+                                setState(() {
+                                  _selectAllHorses = v!;
+                                  if (_selectAllHorses) {
+                                    _horses.addAll(_allHorses);
+                                  } else {
+                                    _horses.clear();
+                                  }
+                                });
+                              },
+                              isSelected: _selectAllHorses,
+                              onlyOneHorse: event.onlyAppliesToOne,
+                            ),
+                            ..._allHorses
+                                .where(event.appliesTo)
+                                .map(
+                                  (h) => Container(
+                                    decoration: BoxDecoration(
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: Theme.of(context).dividerColor,
+                                          width: 1,
+                                        ),
                                       ),
                                     ),
+                                    child: CheckboxListTile(
+                                      value: _horses.any((h2) => h2.id == h.id),
+                                      title: Text(h.name),
+                                      onChanged: (bool? checked) {
+                                        setState(() {
+                                          // if the event only applies to one horse, deselect the other horses
+                                          if (checked == true &&
+                                              event.onlyAppliesToOne) {
+                                            _horses.clear();
+                                          }
+                                          if (checked == true) {
+                                            _horses.add(h);
+                                          } else {
+                                            _horses.removeWhere(
+                                                (h2) => h2.id == h.id);
+                                          }
+                                        });
+                                      },
+                                    ),
                                   ),
-                                  child: CheckboxListTile(
-                                    value: _horses.any((h2) => h2.id == h.id),
-                                    title: Text(h.name),
-                                    onChanged: (bool? checked) {
-                                      setState(() {
-                                        // if the event only applies to one horse, deselect the other horses
-                                        if (checked == true &&
-                                            event.onlyAppliesToOne) {
-                                          _horses.clear();
-                                        }
-                                        if (checked == true) {
-                                          _horses.add(h);
-                                        } else {
-                                          _horses.removeWhere(
-                                              (h2) => h2.id == h.id);
-                                        }
-                                      });
-                                    },
-                                  ),
-                                ),
-                              )
-                              .toList()
-                        ]);
-                  } else if (snapshot.hasError) {
-                    return Text('${snapshot.error}');
-                  } else {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                },
-              )),
+                                )
+                                .toList()
+                          ]);
+                    } else if (snapshot.hasError) {
+                      return Text('${snapshot.error}');
+                    } else {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                  },
+                )),
 
-          //
-          // STEP 3
-          //
-          Step(
-            isActive: _index == 2,
-            state: _index == 2
-                ? StepState.editing
-                : _index > 2
-                    ? StepState.complete
-                    : StepState.disabled,
-            title: const Text('Details'),
-            content: ReactiveForm(
-              formGroup: form,
-              child: Column(
+            //
+            // STEP 3
+            //
+            Step(
+              isActive: _index == 2,
+              state: _index == 2
+                  ? StepState.editing
+                  : _index > 2
+                      ? StepState.complete
+                      : StepState.disabled,
+              title: const Text('Details'),
+              content: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ReactiveDateTimePicker(
@@ -280,8 +292,25 @@ class _NewEventPageState extends State<NewEventPage> {
                     timePickerEntryMode: TimePickerEntryMode.input,
                     decoration: const InputDecoration(
                       labelText: 'Time',
+                      prefixIcon: Icon(Icons.schedule_outlined),
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
+                    child: ReactiveTextField(
+                      keyboardType: TextInputType.number,
+                      formControlName: 'cost',
+                      validationMessages: (control) =>
+                          {ValidationMessage.number: "Cost must be a number"},
+                      decoration: const InputDecoration(
+                        labelText: 'Cost',
+                        prefixIcon: Icon(Icons.attach_money_outlined),
+                      ),
+                    ),
+                  ),
+                  if (widgetsForForm != null)
+                    ...widgetsForForm!.map((e) => Padding(
+                        padding: const EdgeInsets.only(top: 8.0), child: e)),
                   ListTile(
                     key: Key(_notes),
                     leading: const Icon(Icons.note_alt_outlined),
@@ -295,7 +324,7 @@ class _NewEventPageState extends State<NewEventPage> {
                         : const Text("Enter notes..."),
                     trailing: const Icon(Icons.keyboard_arrow_right_outlined),
                     onTap: () async {
-                      var newNotes = await Navigator.push<String>(
+                      var newNotes = await Navigator.push<String?>(
                         context,
                         MaterialPageRoute(
                           builder: (context) => EditNotePage(
@@ -303,7 +332,7 @@ class _NewEventPageState extends State<NewEventPage> {
                           ),
                         ),
                       );
-                      if (newNotes != null && newNotes is String) {
+                      if (newNotes != null) {
                         setState(() {
                           _notes = newNotes;
                         });
@@ -313,12 +342,49 @@ class _NewEventPageState extends State<NewEventPage> {
                       borderRadius: BorderRadius.all(Radius.circular(4)),
                     ),
                   ),
-                  if (widgetsForForm != null) ...widgetsForForm!,
+                  ListTile(
+                    leading: const Icon(Icons.image),
+                    title: const Text('Gallery'),
+                    subtitle: const Text('Collection of photos'),
+                    trailing: const Icon(Icons.keyboard_arrow_right_outlined),
+                    onTap: () async {
+                      var next = await Navigator.push<Horse>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Gallery(
+                            fetch: (offset, limit) async {
+                              return _images.sublist(
+                                  offset,
+                                  (offset + limit > _images.length)
+                                      ? _images.length
+                                      : offset + limit);
+                            },
+                            onAdd: (data) async {
+                              final photo =
+                                  Photo(id: _images.length, photo: data);
+                              setState(() {
+                                _images.add(photo);
+                              });
+                              return photo;
+                            },
+                            onDelete: (int id) async {
+                              setState(() {
+                                _images.removeAt(id);
+                              });
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(4)),
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

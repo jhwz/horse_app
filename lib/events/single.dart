@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:horse_app/horses/list.dart';
 import 'package:horse_app/horses/list_item.dart';
 import 'package:horse_app/horses/single.dart';
 import 'package:horse_app/utils/component_actions.dart';
