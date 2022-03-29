@@ -547,6 +547,7 @@ class AppDb extends _$AppDb {
         newColumns: [
           events.horseID,
           events.cost,
+          events.images,
         ],
         columnTransformer: {
           events.horseID: const CustomExpression("registration_name")
