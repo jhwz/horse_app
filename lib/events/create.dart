@@ -35,6 +35,7 @@ Future<void> _createEvent({
       // add all of the images
       final addedImages =
           await Future.wait(photos.map((e) => db.addPhoto(photo: e.photo)));
+      final addedImagesIds = addedImages.map((e) => e.id).toList();
 
       // create a unique event for each horse
       List<EventsCompanion> events = horses
@@ -44,6 +45,7 @@ Future<void> _createEvent({
                 horseID: Value(h.id),
                 type: Value(event.type),
                 notes: Value(notes),
+                images: Value(addedImagesIds),
                 extra: Value(map),
               ))
           .toList();

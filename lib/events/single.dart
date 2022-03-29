@@ -82,8 +82,8 @@ class _EventSummaryPageState extends State<EventSummaryPage> {
             KeyVal(text: "Time of event:", value: e.date.dateTime()),
             KeyVal(
               text: "Notes:",
-              value: e.notes != null ? e.notes! : "None",
-              muted: e.notes == null,
+              value: e.notes != null && e.notes != "" ? e.notes! : "None",
+              muted: e.notes == null || e.notes == "",
             ),
             ..._buildEvents(e),
           ],
