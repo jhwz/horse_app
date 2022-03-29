@@ -14,6 +14,7 @@ class Event extends DataClass implements Insertable<Event> {
   final DateTime date;
   final double? cost;
   final String? notes;
+  final List<int>? images;
   final Map<String, dynamic>? extra;
   Event(
       {required this.id,
@@ -22,6 +23,7 @@ class Event extends DataClass implements Insertable<Event> {
       required this.date,
       this.cost,
       this.notes,
+      this.images,
       this.extra});
   factory Event.fromData(Map<String, dynamic> data, {String? prefix}) {
     final effectivePrefix = prefix ?? '';
@@ -38,7 +40,9 @@ class Event extends DataClass implements Insertable<Event> {
           .mapFromDatabaseResponse(data['${effectivePrefix}cost']),
       notes: const StringType()
           .mapFromDatabaseResponse(data['${effectivePrefix}notes']),
-      extra: $EventsTable.$converter0.mapToDart(const StringType()
+      images: $EventsTable.$converter0.mapToDart(const StringType()
+          .mapFromDatabaseResponse(data['${effectivePrefix}images'])),
+      extra: $EventsTable.$converter1.mapToDart(const StringType()
           .mapFromDatabaseResponse(data['${effectivePrefix}extra'])),
     );
   }
@@ -55,8 +59,12 @@ class Event extends DataClass implements Insertable<Event> {
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String?>(notes);
     }
-    if (!nullToAbsent || extra != null) {
+    if (!nullToAbsent || images != null) {
       final converter = $EventsTable.$converter0;
+      map['images'] = Variable<String?>(converter.mapToSql(images));
+    }
+    if (!nullToAbsent || extra != null) {
+      final converter = $EventsTable.$converter1;
       map['extra'] = Variable<String?>(converter.mapToSql(extra));
     }
     return map;
@@ -71,6 +79,8 @@ class Event extends DataClass implements Insertable<Event> {
       cost: cost == null && nullToAbsent ? const Value.absent() : Value(cost),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
+      images:
+          images == null && nullToAbsent ? const Value.absent() : Value(images),
       extra:
           extra == null && nullToAbsent ? const Value.absent() : Value(extra),
     );
@@ -86,6 +96,7 @@ class Event extends DataClass implements Insertable<Event> {
       date: serializer.fromJson<DateTime>(json['date']),
       cost: serializer.fromJson<double?>(json['cost']),
       notes: serializer.fromJson<String?>(json['notes']),
+      images: serializer.fromJson<List<int>?>(json['images']),
       extra: serializer.fromJson<Map<String, dynamic>?>(json['extra']),
     );
   }
@@ -99,6 +110,7 @@ class Event extends DataClass implements Insertable<Event> {
       'date': serializer.toJson<DateTime>(date),
       'cost': serializer.toJson<double?>(cost),
       'notes': serializer.toJson<String?>(notes),
+      'images': serializer.toJson<List<int>?>(images),
       'extra': serializer.toJson<Map<String, dynamic>?>(extra),
     };
   }
@@ -110,6 +122,7 @@ class Event extends DataClass implements Insertable<Event> {
           DateTime? date,
           Value<double?> cost = const Value.absent(),
           Value<String?> notes = const Value.absent(),
+          Value<List<int>?> images = const Value.absent(),
           Value<Map<String, dynamic>?> extra = const Value.absent()}) =>
       Event(
         id: id ?? this.id,
@@ -118,6 +131,7 @@ class Event extends DataClass implements Insertable<Event> {
         date: date ?? this.date,
         cost: cost.present ? cost.value : this.cost,
         notes: notes.present ? notes.value : this.notes,
+        images: images.present ? images.value : this.images,
         extra: extra.present ? extra.value : this.extra,
       );
   @override
@@ -129,13 +143,15 @@ class Event extends DataClass implements Insertable<Event> {
           ..write('date: $date, ')
           ..write('cost: $cost, ')
           ..write('notes: $notes, ')
+          ..write('images: $images, ')
           ..write('extra: $extra')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, type, horseID, date, cost, notes, extra);
+  int get hashCode =>
+      Object.hash(id, type, horseID, date, cost, notes, images, extra);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -146,6 +162,7 @@ class Event extends DataClass implements Insertable<Event> {
           other.date == this.date &&
           other.cost == this.cost &&
           other.notes == this.notes &&
+          other.images == this.images &&
           other.extra == this.extra);
 }
 
@@ -156,6 +173,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
   final Value<DateTime> date;
   final Value<double?> cost;
   final Value<String?> notes;
+  final Value<List<int>?> images;
   final Value<Map<String, dynamic>?> extra;
   const EventsCompanion({
     this.id = const Value.absent(),
@@ -164,6 +182,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
     this.date = const Value.absent(),
     this.cost = const Value.absent(),
     this.notes = const Value.absent(),
+    this.images = const Value.absent(),
     this.extra = const Value.absent(),
   });
   EventsCompanion.insert({
@@ -173,6 +192,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
     this.date = const Value.absent(),
     this.cost = const Value.absent(),
     this.notes = const Value.absent(),
+    this.images = const Value.absent(),
     this.extra = const Value.absent(),
   })  : type = Value(type),
         horseID = Value(horseID);
@@ -183,6 +203,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
     Expression<DateTime>? date,
     Expression<double?>? cost,
     Expression<String?>? notes,
+    Expression<List<int>?>? images,
     Expression<Map<String, dynamic>?>? extra,
   }) {
     return RawValuesInsertable({
@@ -192,6 +213,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
       if (date != null) 'date': date,
       if (cost != null) 'cost': cost,
       if (notes != null) 'notes': notes,
+      if (images != null) 'images': images,
       if (extra != null) 'extra': extra,
     });
   }
@@ -203,6 +225,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
       Value<DateTime>? date,
       Value<double?>? cost,
       Value<String?>? notes,
+      Value<List<int>?>? images,
       Value<Map<String, dynamic>?>? extra}) {
     return EventsCompanion(
       id: id ?? this.id,
@@ -211,6 +234,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
       date: date ?? this.date,
       cost: cost ?? this.cost,
       notes: notes ?? this.notes,
+      images: images ?? this.images,
       extra: extra ?? this.extra,
     );
   }
@@ -236,8 +260,12 @@ class EventsCompanion extends UpdateCompanion<Event> {
     if (notes.present) {
       map['notes'] = Variable<String?>(notes.value);
     }
-    if (extra.present) {
+    if (images.present) {
       final converter = $EventsTable.$converter0;
+      map['images'] = Variable<String?>(converter.mapToSql(images.value));
+    }
+    if (extra.present) {
+      final converter = $EventsTable.$converter1;
       map['extra'] = Variable<String?>(converter.mapToSql(extra.value));
     }
     return map;
@@ -252,6 +280,7 @@ class EventsCompanion extends UpdateCompanion<Event> {
           ..write('date: $date, ')
           ..write('cost: $cost, ')
           ..write('notes: $notes, ')
+          ..write('images: $images, ')
           ..write('extra: $extra')
           ..write(')'))
         .toString();
@@ -297,15 +326,21 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
   late final GeneratedColumn<String?> notes = GeneratedColumn<String?>(
       'notes', aliasedName, true,
       type: const StringType(), requiredDuringInsert: false);
+  final VerificationMeta _imagesMeta = const VerificationMeta('images');
+  @override
+  late final GeneratedColumnWithTypeConverter<List<int>, String?> images =
+      GeneratedColumn<String?>('images', aliasedName, true,
+              type: const StringType(), requiredDuringInsert: false)
+          .withConverter<List<int>>($EventsTable.$converter0);
   final VerificationMeta _extraMeta = const VerificationMeta('extra');
   @override
   late final GeneratedColumnWithTypeConverter<Map<String, dynamic>, String?>
       extra = GeneratedColumn<String?>('extra', aliasedName, true,
               type: const StringType(), requiredDuringInsert: false)
-          .withConverter<Map<String, dynamic>>($EventsTable.$converter0);
+          .withConverter<Map<String, dynamic>>($EventsTable.$converter1);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, type, horseID, date, cost, notes, extra];
+      [id, type, horseID, date, cost, notes, images, extra];
   @override
   String get aliasedName => _alias ?? 'events';
   @override
@@ -342,6 +377,7 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
       context.handle(
           _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
     }
+    context.handle(_imagesMeta, const VerificationResult.success());
     context.handle(_extraMeta, const VerificationResult.success());
     return context;
   }
@@ -359,7 +395,9 @@ class $EventsTable extends Events with TableInfo<$EventsTable, Event> {
     return $EventsTable(attachedDatabase, alias);
   }
 
-  static TypeConverter<Map<String, dynamic>, String> $converter0 =
+  static TypeConverter<List<int>, String> $converter0 =
+      const IntArrayConverter();
+  static TypeConverter<Map<String, dynamic>, String> $converter1 =
       const JSONConverter();
 }
 

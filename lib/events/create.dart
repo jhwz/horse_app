@@ -32,6 +32,10 @@ Future<void> _createEvent({
       final cost = map["cost"] as String;
       map.remove("cost");
 
+      // add all of the images
+      final addedImages =
+          await Future.wait(photos.map((e) => db.addPhoto(photo: e.photo)));
+
       // create a unique event for each horse
       List<EventsCompanion> events = horses
           .map((h) => EventsCompanion(

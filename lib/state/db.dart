@@ -118,6 +118,9 @@ class Events extends Table {
   // Any extra notes that the user may want to write about the event.
   TextColumn get notes => text().nullable()();
 
+  // references a list of images associated with this event.
+  TextColumn get images => text().map(const IntArrayConverter()).nullable()();
+
   // Some events have additional metadata that only they understand and
   // know about. This metadata is stored in JSON format because there is no
   // way to generically index and use the data. If one of those events wishes
@@ -207,6 +210,16 @@ class JSONConverter extends TypeConverter<Map<String, dynamic>, String> {
 
   @override
   String mapToSql(Map<String, dynamic>? value) => json.encode(value);
+}
+
+class IntArrayConverter extends TypeConverter<List<int>, String> {
+  const IntArrayConverter();
+  @override
+  List<int>? mapToDart(String? fromDb) =>
+      fromDb?.split(",").map(int.parse).toList();
+
+  @override
+  String mapToSql(List<int>? value) => value?.join(",") ?? "";
 }
 
 late AppDb db;
