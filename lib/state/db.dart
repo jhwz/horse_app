@@ -189,17 +189,10 @@ class EventGallery extends Table {
 }
 
 // composed rows on joins
-class EventHorse extends Event {
+class EventHorse {
   final Horse horse;
-  EventHorse(this.horse, Event event)
-      : super(
-          date: event.date,
-          type: event.type,
-          notes: event.notes,
-          id: event.id,
-          horseID: event.horseID,
-          extra: event.extra,
-        );
+  final Event meta;
+  EventHorse(this.horse, this.meta);
 }
 
 class JSONConverter extends TypeConverter<Map<String, dynamic>, String> {
@@ -385,18 +378,19 @@ class AppDb extends _$AppDb {
       int offset = 0,
       required DateTime now}) async {
     var eventQuery = (select(events)
-          ..where((tbl) =>
-              // past events
-              (tbl.date.isSmallerOrEqualValue(now)) &
-              // where the filter matches some key fields
-              (tbl.horseID.contains(filter) | tbl.type.contains(filter)))
-          ..limit(limit, offset: offset)
+          ..where((tbl) => tbl.date.isSmallerOrEqualValue(now))
           ..orderBy([
             (t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)
           ]))
         .join([
       leftOuterJoin(horses, horses.id.equalsExp(events.horseID)),
     ]);
+
+    eventQuery
+      ..where(horses.name.contains(filter) |
+          horses.registrationName.contains(filter) |
+          events.type.contains(filter))
+      ..limit(limit, offset: offset);
 
     return eventQuery.map((row) {
       return EventHorse(
@@ -406,8 +400,25 @@ class AppDb extends _$AppDb {
     }).get();
   }
 
-  createEvent(Insertable<Event> e) async {
-    await into(events).insert(e);
+  Future<List<EventHorse>> fetchEvents(List<int> eventIDs) async {
+    var eventQuery =
+        (select(events)..where((tbl) => tbl.id.isIn(eventIDs))).join([
+      leftOuterJoin(horses, horses.id.equalsExp(events.horseID)),
+    ]);
+    return eventQuery.map((row) {
+      return EventHorse(
+        row.readTable(horses),
+        row.readTable(events),
+      );
+    }).get();
+  }
+
+  Future<int> createEvent(Insertable<Event> e) async {
+    return await into(events).insert(e);
+  }
+
+  updateEvent(Insertable<Event> e) async {
+    await (update(events)..whereSamePrimaryKey(e)).write(e);
   }
 
   deleteEvent(int eventID) async {
@@ -433,9 +444,13 @@ class AppDb extends _$AppDb {
         .getSingleOrNull();
   }
 
-  Future<EventGalleryData> addPhoto({required Uint8List photo}) {
+  Future<EventGalleryData> addEventPhoto({required Uint8List photo}) {
     return into(eventGallery)
         .insertReturning(EventGalleryCompanion(photo: Value(photo)));
+  }
+
+  Future<List<EventGalleryData>> getEventPhotos({required List<int> ids}) {
+    return (select(eventGallery)..where((tbl) => tbl.id.isIn(ids))).get();
   }
 
   // *******************

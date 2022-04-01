@@ -20,12 +20,12 @@ class TopEventListItem extends StatelessWidget {
     return ListTile(
       minVerticalPadding: 0,
       title: Text(
-        event.formattedType,
+        event.meta.formattedType,
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
       subtitle: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [Text(event.horse.displayName), Text(event.date.date())]),
+          children: [Text(event.horse.displayName), Text(event.meta.date.date())]),
       isThreeLine: true,
       onTap: () => onTap(event),
     );
@@ -52,7 +52,7 @@ class NestedEventListItem extends StatelessWidget {
           formatStr(event.horse.displayName),
           style: const TextStyle(fontWeight: FontWeight.w500),
         ),
-        Text(event.date.date()),
+        Text(event.meta.date.date()),
       ]),
       onTap: () => onTap(event),
     );
@@ -79,7 +79,7 @@ class _EventListGroupState extends State<EventListGroup> {
     return ListTile(
       onTap: () => setState(() => _expanded = !_expanded),
       title: Text(
-        widget.events[0].formattedType,
+        widget.events[0].meta.formattedType,
         style: const TextStyle(fontWeight: FontWeight.w700),
       ),
       subtitle:

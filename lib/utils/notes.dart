@@ -26,7 +26,9 @@ class _EditNotePageState extends State<EditNotePage> {
         title: const Text("Edit Notes"),
         leading: IconButton(
           icon: const Icon(Icons.check),
-          onPressed: () => Navigator.pop(context, contentController.text),
+          onPressed: () {
+            Navigator.pop(context, contentController.text);
+          },
         ),
       ),
       body: Stack(

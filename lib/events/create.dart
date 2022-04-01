@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:horse_app/events/add_event_dialog.dart';
+import 'package:horse_app/events/form_widgets.dart';
 import 'package:horse_app/events/types/noop.dart';
 import 'package:horse_app/events/types/types.dart';
 import 'package:horse_app/notifications.dart';
@@ -16,6 +17,43 @@ import 'package:reactive_forms/reactive_forms.dart';
 import '../utils/utils.dart';
 import "../state/db.dart";
 
+FormGroup formGroupFromEvent(Event? event) {
+  final form = FormGroup({
+    'date': FormControl<DateTime>(
+      value: event?.date ?? DateTime.now(),
+    ),
+    'cost': FormControl<String>(
+        value: event?.cost?.toStringAsFixed(2) ?? "0.00",
+        validators: [CustomValidators.money]),
+  });
+  form.controls['cost']!.markAsDirty();
+
+  return form;
+}
+
+EventsCompanion updateEventWithForm(EventsCompanion e, FormGroup form) {
+  Map<String, dynamic> map = Map.from(form.value);
+  final eventTime = map["date"] as DateTime;
+  map.remove("date");
+  final cost = map["cost"] as String;
+  map.remove("cost");
+
+  // only keep the valid values
+  for (var k in map.keys) {
+    if (form.controls[k]?.invalid ?? true) {
+      map.remove(k);
+    }
+  }
+
+  return e.copyWith(
+    date: form.controls['date']!.invalid ? e.date : Value(eventTime),
+    cost: form.controls['cost']!.invalid
+        ? const Value.absent()
+        : Value(double.parse(cost)),
+    extra: Value(map),
+  );
+}
+
 Future<void> _createEvent({
   required BuildContext context,
   required FormGroup form,
@@ -26,32 +64,25 @@ Future<void> _createEvent({
 }) async {
   try {
     if (horses.isNotEmpty) {
-      Map<String, dynamic> map = Map.from(form.value);
-      final eventTime = map["date"] as DateTime;
-      map.remove("date");
-      final cost = map["cost"] as String;
-      map.remove("cost");
-
       // add all of the images
-      final addedImages =
-          await Future.wait(photos.map((e) => db.addPhoto(photo: e.photo)));
+      final addedImages = await Future.wait(
+          photos.map((e) => db.addEventPhoto(photo: e.photo)));
       final addedImagesIds = addedImages.map((e) => e.id).toList();
 
       // create a unique event for each horse
       List<EventsCompanion> events = horses
-          .map((h) => EventsCompanion(
-                date: Value(eventTime),
-                cost: Value(double.tryParse(cost) ?? 0),
+          .map((h) => updateEventWithForm(
+              EventsCompanion(
                 horseID: Value(h.id),
                 type: Value(event.type),
                 notes: Value(notes),
                 images: Value(addedImagesIds),
-                extra: Value(map),
-              ))
+              ),
+              form))
           .toList();
 
       // add all the events to the database
-      await Future.wait(events.map((e) => db.createEvent(e)));
+      final eventIDs = await Future.wait(events.map((e) => db.createEvent(e)));
 
       // if this is a special event, create some actions from it.
       for (var h in horses) {
@@ -64,16 +95,14 @@ Future<void> _createEvent({
 
       // asynchronously schedule notifications for the event
       () async {
-        final storedEvents = await db.listEvents(
-            now: eventTime.add(const Duration(minutes: 1)),
-            limit: events.length);
+        final storedEvents = await db.fetchEvents(eventIDs);
 
         if (storedEvents.length == 1) {
           scheduleNotificationForEvent(
-              storedEvents[0], storedEvents[0].horse.displayName);
+              storedEvents[0].meta, storedEvents[0].horse.displayName);
         } else if (storedEvents.isNotEmpty) {
           scheduleNotificationForEventList(
-              storedEvents[0], storedEvents.length);
+              storedEvents[0].meta, storedEvents.length);
         }
       }();
     }
@@ -93,19 +122,25 @@ class NewEventPage extends StatefulWidget {
 
 class _NewEventPageState extends State<NewEventPage> {
   static const String _title = 'New Event';
+
+  // The current page in the event creation step
   int _index = 0;
+
+  // The chosen event, defaults to noop
   ET event = NoopEvent("noEvent");
+
+  // tracks the horses that are selected
   final List<Horse> _horses = [];
   List<Horse> _allHorses = [];
-  List<Photo> _images = [];
   bool _selectAllHorses = false;
+
+  // the images that get added to the event
+  final List<Photo> _images = [];
+
+  // any notes that are dynamically added
   String _notes = "";
 
-  FormGroup form = FormGroup({
-    'date': FormControl<DateTime>(value: DateTime.now()),
-    'cost': FormControl<String>(
-        value: "0.00", validators: [CustomValidators.money]),
-  });
+  FormGroup form = formGroupFromEvent(null);
   List<Widget>? widgetsForForm;
 
   Future<bool> _loadHorses() async {
@@ -292,100 +327,39 @@ class _NewEventPageState extends State<NewEventPage> {
               content: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  ReactiveDateTimePicker(
-                    formControlName: 'date',
-                    type: ReactiveDatePickerFieldType.dateTime,
-                    timePickerEntryMode: TimePickerEntryMode.input,
-                    decoration: const InputDecoration(
-                      labelText: 'Time',
-                      prefixIcon: Icon(Icons.schedule_outlined),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0, bottom: 16.0),
-                    child: ReactiveTextField(
-                      keyboardType: TextInputType.number,
-                      formControlName: 'cost',
-                      validationMessages: (control) =>
-                          {ValidationMessage.number: "Cost must be a number"},
-                      decoration: const InputDecoration(
-                        labelText: 'Cost',
-                        prefixIcon: Icon(Icons.attach_money_outlined),
-                      ),
-                    ),
+                  const DateFormField(),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8.0, bottom: 16.0),
+                    child: CostFormField(),
                   ),
                   if (widgetsForForm != null)
                     ...widgetsForForm!.map((e) => Padding(
                         padding: const EdgeInsets.only(top: 8.0), child: e)),
-                  ListTile(
-                    key: Key(_notes),
-                    leading: const Icon(Icons.note_alt_outlined),
-                    title: const Text('Notes'),
-                    subtitle: _notes != ""
-                        ? Text(
-                            _notes,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          )
-                        : const Text("Enter notes..."),
-                    trailing: const Icon(Icons.keyboard_arrow_right_outlined),
-                    onTap: () async {
-                      var newNotes = await Navigator.push<String?>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EditNotePage(
-                            note: _notes,
-                          ),
-                        ),
-                      );
-                      if (newNotes != null) {
-                        setState(() {
-                          _notes = newNotes;
-                        });
-                      }
-                    },
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(4)),
-                    ),
+                  EventNotesListTile(
+                    value: _notes,
+                    onChange: (String newNotes) => setState(() {
+                      _notes = newNotes;
+                    }),
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.image),
-                    title: const Text('Gallery'),
-                    subtitle: const Text('Collection of photos'),
-                    trailing: const Icon(Icons.keyboard_arrow_right_outlined),
-                    onTap: () async {
-                      var next = await Navigator.push<Horse>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Gallery(
-                            fetch: (offset, limit) async {
-                              return _images.sublist(
-                                  offset,
-                                  (offset + limit > _images.length)
-                                      ? _images.length
-                                      : offset + limit);
-                            },
-                            onAdd: (data) async {
-                              final photo =
-                                  Photo(id: _images.length, photo: data);
-                              setState(() {
-                                _images.add(photo);
-                              });
-                              return photo;
-                            },
-                            onDelete: (int id) async {
-                              setState(() {
-                                _images.removeAt(id);
-                              });
-                            },
-                          ),
-                        ),
-                      );
+                  EventGalleryListTile(
+                    fetch: (offset, limit) async => _images.sublist(
+                        offset,
+                        (offset + limit > _images.length)
+                            ? _images.length
+                            : offset + limit),
+                    onAdd: (data) async {
+                      final photo = Photo(id: _images.length, photo: data);
+                      setState(() {
+                        _images.add(photo);
+                      });
+                      return photo;
                     },
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(4)),
-                    ),
-                  ),
+                    onDelete: (int id) async {
+                      setState(() {
+                        _images.removeAt(id);
+                      });
+                    },
+                  )
                 ],
               ),
             ),

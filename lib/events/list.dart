@@ -82,8 +82,8 @@ class _EventsPageState extends State<EventsPage> {
           continue;
         }
 
-        if (curr.last.type == events[i].type &&
-            curr.last.date.difference(events[i].date).abs().inHours < 8) {
+        if (curr.last.meta.type == events[i].meta.type &&
+            curr.last.meta.date.difference(events[i].meta.date).abs().inHours < 8) {
           curr.add(events[i]);
         } else {
           if (curr.length > 1) {
@@ -111,8 +111,8 @@ class _EventsPageState extends State<EventsPage> {
           );
           isLastPage = eventsNext.length < _pageSize;
           for (int i = 0; i < eventsNext.length; i++) {
-            if (curr.last.type == eventsNext[i].type &&
-                curr.last.date.difference(eventsNext[i].date).abs().inHours <
+            if (curr.last.meta.type == eventsNext[i].meta.type &&
+                curr.last.meta.date.difference(eventsNext[i].meta.date).abs().inHours <
                     8) {
               curr.add(eventsNext[i]);
             } else {
@@ -146,6 +146,7 @@ class _EventsPageState extends State<EventsPage> {
     }));
     if (result is ComponentAction) {
       switch (result) {
+        case ComponentAction.change:
         case ComponentAction.delete:
           _pagingController.refresh();
           break;
